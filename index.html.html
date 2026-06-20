@@ -1,0 +1,3692 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Logistics - Nền tảng trao đổi tài liệu học tập</title>
+    <meta name="description" content="Nền tảng trao đổi và giao nhận tài liệu học tập cũ giữa sinh viên">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* ===== ROOT VARIABLES ===== */
+        :root {
+            --primary: #0a7e8c;
+            --primary-dark: #065a66;
+            --primary-light: #0e9baa;
+            --primary-bg: #e8f4f5;
+            --secondary: #f5a623;
+            --success: #00b894;
+            --danger: #e74c3c;
+            --gold: #f39c12;
+            --gold-light: #fdebd0;
+            --premium: #8e44ad;
+            --premium-light: #f4ecf7;
+            --gray-50: #f7f9fa;
+            --gray-100: #edf2f4;
+            --gray-200: #dce4e8;
+            --gray-300: #b8c9d0;
+            --gray-400: #7a9aa6;
+            --gray-500: #2d4a56;
+            --shadow: 0 4px 6px rgba(10, 126, 140, 0.08);
+            --shadow-md: 0 10px 30px rgba(10, 126, 140, 0.12);
+            --shadow-lg: 0 20px 60px rgba(10, 126, 140, 0.15);
+            --radius: 16px;
+            --radius-lg: 24px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ===== RESET & BASE ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f4f5;
+            min-height: 100vh;
+            color: var(--gray-500);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ===== NOTIFICATION ===== */
+        #notificationContainer {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 99999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 420px;
+            width: 100%;
+        }
+
+        .notification-toast {
+            padding: 14px 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            animation: slideInRight 0.4s ease;
+            font-size: 0.9rem;
+            background: #fff;
+            border: 1px solid var(--gray-200);
+        }
+
+        .notification-toast.success { border-left: 4px solid var(--success); }
+        .notification-toast.error { border-left: 4px solid var(--danger); }
+        .notification-toast.info { border-left: 4px solid var(--primary); }
+        .notification-toast.gold { border-left: 4px solid var(--gold); }
+
+        .notification-toast i { font-size: 1.2rem; flex-shrink: 0; }
+        .notification-toast.success i { color: var(--success); }
+        .notification-toast.error i { color: var(--danger); }
+        .notification-toast.info i { color: var(--primary); }
+        .notification-toast.gold i { color: var(--gold); }
+
+        @keyframes slideInRight {
+            from { transform: translateX(120px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutRight {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(120px); opacity: 0; }
+        }
+
+        /* ===== LOADING ===== */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 126, 140, 0.85);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 99998;
+        }
+        .loading-overlay.active { display: flex; }
+
+        .loading-spinner {
+            background: #fff;
+            padding: 40px 48px;
+            border-radius: var(--radius-lg);
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            animation: scaleUp 0.4s ease;
+        }
+        .loading-spinner .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--gray-200);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+        .loading-spinner p { margin-top: 14px; color: var(--gray-500); font-weight: 600; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes scaleUp {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* ===== LOGIN PAGE ===== */
+        #loginPage {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            background: linear-gradient(145deg, #e8f4f5, #d4e8ea);
+        }
+
+        .login-container { width: 100%; max-width: 520px; padding: 0; }
+        .login-card {
+            background: #fff;
+            border-radius: var(--radius-lg);
+            padding: 44px 40px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(10, 126, 140, 0.08);
+        }
+
+        .brand { text-align: center; margin-bottom: 28px; }
+        .brand .logo {
+            width: 76px;
+            height: 76px;
+            background: linear-gradient(145deg, var(--primary), var(--primary-dark));
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.6rem;
+            color: #fff;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 30px rgba(10, 126, 140, 0.25);
+        }
+        .brand h1 { font-size: 2.2rem; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
+        .brand h1 span { color: var(--primary-dark); }
+        .brand p { color: var(--gray-400); font-size: 0.95rem; margin-top: 4px; }
+
+        .tabs {
+            display: flex;
+            gap: 4px;
+            background: var(--gray-50);
+            border-radius: var(--radius);
+            padding: 4px;
+            margin-bottom: 24px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 11px;
+            border: none;
+            background: transparent;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--gray-400);
+            font-family: inherit;
+        }
+        .tab-btn:hover { color: var(--gray-500); }
+        .tab-btn.active {
+            background: #fff;
+            color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+        .tab-btn i { margin-right: 8px; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--gray-500);
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .form-group label .required { color: var(--danger); }
+        .form-group .input-wrapper { position: relative; }
+        .form-group .input-wrapper input,
+        .form-group .input-wrapper select {
+            width: 100%;
+            padding: 11px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 0.95rem;
+            transition: var(--transition);
+            background: var(--gray-50);
+            font-family: inherit;
+            color: var(--gray-500);
+        }
+        .form-group .input-wrapper input:focus,
+        .form-group .input-wrapper select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(10, 126, 140, 0.08);
+        }
+        .form-group .input-wrapper .toggle-password {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--gray-400);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 4px;
+            transition: var(--transition);
+        }
+        .form-group .input-wrapper .toggle-password:hover { color: var(--gray-500); }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .form-options .remember {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--gray-400);
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .form-options .remember input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+        .form-options .forgot {
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .form-options .forgot:hover { text-decoration: underline; }
+
+        .btn-submit {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(145deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-family: inherit;
+            box-shadow: 0 4px 20px rgba(10, 126, 140, 0.2);
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(10, 126, 140, 0.3);
+        }
+
+        .page-form { display: none; animation: fadeIn 0.3s ease; }
+        .page-form.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-footer { text-align: center; margin-top: 18px; font-size: 0.85rem; color: var(--gray-400); }
+        .login-footer a { color: var(--primary); text-decoration: none; font-weight: 600; cursor: pointer; }
+        .login-footer a:hover { text-decoration: underline; }
+
+        /* ============================================
+                   DASHBOARD
+                   ============================================ */
+        #dashboardPage { display: none; min-height: 100vh; background: var(--gray-50); }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 270px;
+            background: #fff;
+            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            overflow-y: auto;
+            border-right: 1px solid var(--gray-200);
+            transform: translateX(0);
+        }
+        .sidebar.closed { transform: translateX(-100%); }
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 126, 140, 0.3);
+            z-index: 999;
+            display: none;
+            backdrop-filter: blur(4px);
+        }
+        .sidebar-overlay.active { display: block; }
+
+        .sidebar-brand {
+            padding: 22px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid var(--primary-bg);
+            background: var(--primary-bg);
+        }
+        .sidebar-brand .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--gray-500);
+            text-decoration: none;
+        }
+        .sidebar-brand .brand .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(145deg, var(--primary), var(--primary-dark));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.2rem;
+        }
+        .sidebar-brand .brand span { color: var(--primary); }
+        .sidebar-close {
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            cursor: pointer;
+            color: var(--gray-400);
+            padding: 4px;
+            display: none;
+            transition: var(--transition);
+        }
+        .sidebar-close:hover { color: var(--gray-500); }
+
+        .sidebar-nav { padding: 16px 0; }
+        .sidebar-nav .nav-label {
+            padding: 8px 24px;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-300);
+            font-weight: 700;
+        }
+        .sidebar-nav ul { list-style: none; }
+        .sidebar-nav ul li { margin-bottom: 2px; }
+        .sidebar-nav ul li a {
+            display: flex;
+            align-items: center;
+            padding: 10px 24px;
+            color: var(--gray-400);
+            text-decoration: none;
+            transition: var(--transition);
+            border-left: 3px solid transparent;
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-radius: 0 30px 30px 0;
+            margin-right: 12px;
+        }
+        .sidebar-nav ul li a:hover {
+            background: var(--primary-bg);
+            color: var(--primary);
+        }
+        .sidebar-nav ul li a.active {
+            background: var(--primary-bg);
+            color: var(--primary);
+            border-left-color: var(--primary);
+        }
+        .sidebar-nav ul li a i {
+            width: 22px;
+            margin-right: 14px;
+            font-size: 1rem;
+            text-align: center;
+        }
+        .sidebar-nav ul li a .badge {
+            margin-left: auto;
+            background: var(--primary);
+            color: #fff;
+            padding: 1px 10px;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 700;
+        }
+        .sidebar-nav ul li a .badge.gold {
+            background: var(--gold);
+            color: #fff;
+        }
+
+        .sidebar-footer {
+            margin-top: 20px;
+            padding-top: 12px;
+            border-top: 1px solid var(--gray-200);
+        }
+        .sidebar-footer a { color: var(--primary) !important; }
+        .sidebar-footer a:hover { background: var(--primary-bg) !important; }
+
+        .main-content {
+            margin-left: 270px;
+            flex: 1;
+            min-height: 100vh;
+            display: block;
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ===== HEADER ===== */
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 14px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--gray-200);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .header-left .menu-toggle {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: var(--gray-400);
+            padding: 6px;
+            border-radius: 8px;
+            transition: var(--transition);
+            display: none;
+        }
+        .header-left .menu-toggle:hover {
+            background: var(--gray-100);
+            color: var(--gray-500);
+        }
+        .header-left h1 { font-size: 1.4rem; font-weight: 700; color: var(--gray-500); }
+        .header-left p { color: var(--gray-400); font-size: 0.8rem; margin-top: 1px; }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .header-search { position: relative; }
+        .header-search input {
+            padding: 8px 16px 8px 44px;
+            border: 2px solid var(--gray-200);
+            border-radius: 30px;
+            font-size: 0.85rem;
+            width: 260px;
+            transition: var(--transition);
+            background: var(--gray-100);
+            font-family: inherit;
+        }
+        .header-search input:focus {
+            outline: none;
+            border-color: var(--primary);
+            width: 320px;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(10, 126, 140, 0.08);
+        }
+        .header-search i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-400);
+        }
+
+        .notif-btn {
+            position: relative;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--gray-400);
+            padding: 8px;
+            transition: var(--transition);
+            border-radius: 50%;
+        }
+        .notif-btn:hover {
+            color: var(--gray-500);
+            background: var(--gray-100);
+        }
+        .notif-btn .dot {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 8px;
+            height: 8px;
+            background: var(--danger);
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 4px 14px 4px 4px;
+            border-radius: 30px;
+            transition: var(--transition);
+            border: 1px solid transparent;
+        }
+        .user-profile:hover {
+            background: var(--gray-100);
+            border-color: var(--gray-200);
+        }
+        .user-profile img {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .user-profile .name {
+            font-weight: 600;
+            color: var(--gray-500);
+            font-size: 0.85rem;
+        }
+        .user-profile .chevron { color: var(--gray-400); font-size: 0.7rem; }
+        .user-profile .membership-badge {
+            font-size: 0.6rem;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .user-profile .membership-badge.free {
+            background: var(--gray-200);
+            color: var(--gray-400);
+        }
+        .user-profile .membership-badge.basic {
+            background: var(--gold);
+            color: #fff;
+        }
+        .user-profile .membership-badge.premium {
+            background: var(--premium);
+            color: #fff;
+        }
+
+        /* ===== CONTENT ===== */
+        .content-wrapper { padding: 28px 32px 32px; }
+        .page { display: none; animation: fadeIn 0.4s ease; }
+        .page.active { display: block; }
+
+        /* ===== STATS ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: #fff;
+            padding: 22px 20px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+        .stat-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+            color: #fff;
+        }
+        .stat-icon.blue { background: linear-gradient(145deg, #0a7e8c, #065a66); }
+        .stat-icon.green { background: linear-gradient(145deg, #00b894, #00876c); }
+        .stat-icon.orange { background: linear-gradient(145deg, #f5a623, #d4891b); }
+        .stat-icon.purple { background: linear-gradient(145deg, #6c5ce7, #4a3cb5); }
+        .stat-icon.gold { background: linear-gradient(145deg, #f39c12, #d68910); }
+
+        .stat-info h3 { font-size: 1.6rem; font-weight: 700; color: var(--gray-500); line-height: 1.2; }
+        .stat-info p { color: var(--gray-400); font-size: 0.85rem; }
+        .stat-info .change { font-size: 0.75rem; font-weight: 600; }
+        .stat-info .change.positive { color: var(--success); }
+        .stat-info .change i { margin-right: 2px; }
+
+        /* ===== GRID ===== */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 24px;
+        }
+        .card {
+            background: #fff;
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+        .card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+        .card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-header h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--gray-500);
+        }
+        .card-header h3 i {
+            margin-right: 8px;
+            color: var(--primary);
+        }
+        .card-header .view-all {
+            color: var(--primary);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-family: inherit;
+        }
+        .card-header .view-all:hover { text-decoration: underline; }
+        .card-body { padding: 16px 20px; }
+
+        /* ===== DOCUMENT ITEMS ===== */
+        .doc-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-100);
+            transition: var(--transition);
+        }
+        .doc-item:last-child { border-bottom: none; }
+        .doc-item:hover {
+            background: var(--primary-bg);
+            margin: 0 -4px;
+            padding: 10px 4px;
+            border-radius: 8px;
+        }
+        .doc-item .doc-thumb {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: var(--gray-200);
+            border: 1px solid var(--gray-200);
+        }
+        .doc-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: var(--primary-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .doc-icon.green { background: #e8f5e9; color: var(--success); }
+        .doc-icon.orange { background: #fff8e1; color: var(--secondary); }
+        .doc-icon.red { background: #fbe9e7; color: var(--danger); }
+        .doc-icon.gold { background: var(--gold-light); color: var(--gold); }
+        .doc-icon.premium { background: var(--premium-light); color: var(--premium); }
+
+        .doc-info { flex: 1; }
+        .doc-info h4 { font-size: 0.88rem; font-weight: 600; color: var(--gray-500); }
+        .doc-info p { font-size: 0.75rem; color: var(--gray-400); }
+
+        .doc-status {
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            flex-shrink: 0;
+        }
+        .doc-status.available { background: #e8f5e9; color: #1b5e20; }
+        .doc-status.pending { background: #fff8e1; color: #e65100; }
+        .doc-status.exchanged { background: #fbe9e7; color: #bf360c; }
+        .doc-status.premium { background: var(--premium-light); color: var(--premium); }
+        .doc-status.free { background: var(--gray-100); color: var(--gray-400); }
+
+        /* ===== EXCHANGE ===== */
+        .exchange-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .exchange-item:last-child { border-bottom: none; }
+        .exchange-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .exchange-user img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .exchange-user h4 { font-size: 0.85rem; font-weight: 600; color: var(--gray-500); }
+        .exchange-user p { font-size: 0.75rem; color: var(--gray-400); }
+
+        .btn-small {
+            padding: 5px 18px;
+            background: linear-gradient(145deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+            flex-shrink: 0;
+            box-shadow: 0 2px 10px rgba(10, 126, 140, 0.2);
+        }
+        .btn-small:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(10, 126, 140, 0.3);
+        }
+        .btn-small:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .btn-small.gold {
+            background: linear-gradient(145deg, var(--gold), #d68910);
+            box-shadow: 0 2px 10px rgba(243, 156, 18, 0.3);
+        }
+        .btn-small.gold:hover {
+            box-shadow: 0 4px 20px rgba(243, 156, 18, 0.4);
+        }
+        .btn-small.premium {
+            background: linear-gradient(145deg, var(--premium), #6c3483);
+            box-shadow: 0 2px 10px rgba(142, 68, 173, 0.3);
+        }
+        .btn-small.premium:hover {
+            box-shadow: 0 4px 20px rgba(142, 68, 173, 0.4);
+        }
+
+        /* ===== PAGE HEADER ===== */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .page-header h2 { font-size: 1.4rem; font-weight: 700; color: var(--gray-500); }
+
+        .btn-primary {
+            padding: 10px 24px;
+            background: linear-gradient(145deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            box-shadow: 0 4px 20px rgba(10, 126, 140, 0.25);
+        }
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 35px rgba(10, 126, 140, 0.35);
+        }
+        .btn-primary.outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            box-shadow: none;
+        }
+        .btn-primary.outline:hover {
+            background: var(--primary);
+            color: #fff;
+        }
+        .btn-primary.gold {
+            background: linear-gradient(145deg, var(--gold), #d68910);
+            box-shadow: 0 4px 20px rgba(243, 156, 18, 0.3);
+        }
+        .btn-primary.gold:hover {
+            box-shadow: 0 8px 35px rgba(243, 156, 18, 0.4);
+        }
+        .btn-primary.premium {
+            background: linear-gradient(145deg, var(--premium), #6c3483);
+            box-shadow: 0 4px 20px rgba(142, 68, 173, 0.3);
+        }
+        .btn-primary.premium:hover {
+            box-shadow: 0 8px 35px rgba(142, 68, 173, 0.4);
+        }
+
+        /* ===== DOCUMENTS GRID ===== */
+        .documents-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        .doc-card {
+            background: #fff;
+            border-radius: var(--radius);
+            overflow: hidden;
+            border: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+        .doc-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+        .doc-card .doc-img-wrapper {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+            background: var(--gray-200);
+        }
+        .doc-card .doc-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .doc-card .doc-img-wrapper .doc-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #fff;
+        }
+        .doc-card .doc-img-wrapper .doc-badge.premium {
+            background: var(--premium);
+        }
+        .doc-card .doc-img-wrapper .doc-badge.free {
+            background: var(--success);
+        }
+        .doc-card .doc-img-wrapper .doc-badge.exchanged {
+            background: var(--danger);
+        }
+        .doc-card .doc-img-wrapper .no-image {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            font-size: 4rem;
+            color: var(--gray-300);
+            background: var(--gray-100);
+        }
+        .doc-card .doc-body { padding: 16px; }
+        .doc-card .doc-body h4 { font-size: 0.95rem; font-weight: 600; color: var(--gray-500); margin-bottom: 2px; }
+        .doc-card .doc-body .course { font-size: 0.8rem; color: var(--gray-400); }
+        .doc-card .doc-body .meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--gray-400);
+            margin-top: 8px;
+        }
+        .doc-card .doc-body .meta i { margin-right: 4px; }
+        .doc-card .doc-body .condition {
+            margin-top: 8px;
+            padding: 6px 12px;
+            background: var(--gray-50);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .doc-card .doc-body .condition i {
+            color: var(--primary);
+        }
+        .doc-card .doc-body .location-info {
+            margin-top: 6px;
+            padding: 6px 12px;
+            background: var(--primary-bg);
+            border-radius: 8px;
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .doc-card .doc-body .location-info i {
+            color: var(--primary);
+        }
+        .doc-card .doc-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--gray-100);
+        }
+
+        /* ===== FILTER ===== */
+        .filter-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .filter-group .filter-btn {
+            padding: 6px 18px;
+            border: 2px solid var(--gray-200);
+            background: transparent;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: var(--transition);
+            color: var(--gray-400);
+            font-size: 0.8rem;
+            font-family: inherit;
+        }
+        .filter-group .filter-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .filter-group .filter-btn.active {
+            background: linear-gradient(145deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            border-color: transparent;
+        }
+
+        /* ===== EXCHANGE LIST ===== */
+        .exchange-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .exchange-card {
+            background: #fff;
+            padding: 16px 20px;
+            border-radius: var(--radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+        .exchange-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+        .exchange-card .info h4 { font-size: 0.9rem; font-weight: 600; color: var(--gray-500); }
+        .exchange-card .info p { font-size: 0.8rem; color: var(--gray-400); }
+
+        /* ===== REQUESTS ===== */
+        .requests-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .request-card {
+            background: #fff;
+            padding: 16px 20px;
+            border-radius: var(--radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid var(--secondary);
+            border: 1px solid var(--gray-200);
+            border-left-width: 4px;
+            transition: var(--transition);
+        }
+        .request-card:hover { box-shadow: var(--shadow); }
+        .request-card .info h4 { font-size: 0.9rem; font-weight: 600; color: var(--gray-500); }
+        .request-card .info p { font-size: 0.8rem; color: var(--gray-400); }
+
+        .request-actions { display: flex; gap: 8px; }
+        .request-actions .btn-approve {
+            padding: 5px 16px;
+            background: #e8f5e9;
+            color: #1b5e20;
+            border: none;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.8rem;
+            font-family: inherit;
+        }
+        .request-actions .btn-approve:hover { background: #c8e6c9; }
+        .request-actions .btn-reject {
+            padding: 5px 16px;
+            background: #fbe9e7;
+            color: #bf360c;
+            border: none;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.8rem;
+            font-family: inherit;
+        }
+        .request-actions .btn-reject:hover { background: #ffccbc; }
+
+        /* ===== MESSAGES ===== */
+        .messages-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .message-card {
+            background: #fff;
+            padding: 14px 18px;
+            border-radius: var(--radius);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+        .message-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+        .message-card img {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .message-card .content { flex: 1; }
+        .message-card .content h4 { font-size: 0.9rem; font-weight: 600; color: var(--gray-500); }
+        .message-card .content p { font-size: 0.82rem; color: var(--gray-400); }
+        .message-card .content .time { font-size: 0.7rem; color: var(--gray-400); }
+        .message-card .unread {
+            background: var(--primary);
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        /* ===== HISTORY ===== */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .history-item {
+            background: #fff;
+            padding: 16px 20px;
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+            transition: var(--transition);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .history-item:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+        .history-item .h-info h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--gray-500);
+        }
+        .history-item .h-info p {
+            font-size: 0.8rem;
+            color: var(--gray-400);
+        }
+        .history-item .h-info p i {
+            margin-right: 4px;
+            color: var(--primary);
+        }
+        .history-item .h-status {
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .history-item .h-status.completed {
+            background: #e8f5e9;
+            color: #1b5e20;
+        }
+        .history-item .h-status.pending {
+            background: #fff8e1;
+            color: #e65100;
+        }
+        .history-item .h-status.cancelled {
+            background: #fbe9e7;
+            color: #bf360c;
+        }
+        .history-item .h-rating {
+            display: flex;
+            gap: 4px;
+            color: var(--gold);
+        }
+        .history-item .h-rating i {
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 1.1rem;
+        }
+        .history-item .h-rating i:hover {
+            transform: scale(1.2);
+        }
+        .history-item .h-rating i.active {
+            color: var(--gold);
+        }
+        .history-item .h-rating i.inactive {
+            color: var(--gray-300);
+        }
+        .history-item .h-rating-text {
+            font-size: 0.75rem;
+            color: var(--gray-400);
+            margin-left: 4px;
+        }
+
+        /* ===== PROFILE ===== */
+        .profile-container { max-width: 800px; margin: 0 auto; }
+        .profile-card {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 40px;
+            text-align: center;
+            border: 1px solid var(--gray-200);
+        }
+        .profile-avatar {
+            position: relative;
+            display: inline-block;
+        }
+        .profile-avatar img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #fff;
+            box-shadow: var(--shadow);
+        }
+        .profile-avatar .change-btn {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(145deg, var(--primary), var(--primary-dark));
+            border: 3px solid #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .profile-avatar .change-btn:hover { transform: scale(1.1); }
+
+        .profile-card h3 { font-size: 1.4rem; font-weight: 700; margin-top: 16px; color: var(--gray-500); }
+        .profile-card .email { color: var(--gray-400); font-size: 0.9rem; }
+        .profile-card .role { color: var(--gray-400); font-size: 0.85rem; margin-top: 2px; }
+
+        .profile-stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 24px 0;
+        }
+        .profile-stats div { text-align: center; }
+        .profile-stats .num { display: block; font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+        .profile-stats .label { font-size: 0.8rem; color: var(--gray-400); }
+
+        .profile-bio {
+            text-align: left;
+            margin: 18px 0;
+            padding: 18px 22px;
+            background: var(--gray-50);
+            border-radius: var(--radius);
+        }
+        .profile-bio h4 { color: var(--gray-500); margin-bottom: 4px; font-size: 0.9rem; }
+        .profile-bio p { color: var(--gray-400); font-size: 0.9rem; line-height: 1.7; }
+
+        .profile-skills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+        .profile-skills .tag {
+            padding: 5px 18px;
+            background: var(--gray-100);
+            color: var(--gray-500);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        /* ===== LOCATION SELECTOR ===== */
+        .location-selector {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            border: 1px solid var(--gray-200);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .location-selector label {
+            font-weight: 600;
+            color: var(--gray-500);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .location-selector label i {
+            color: var(--primary);
+        }
+        .location-selector select {
+            padding: 8px 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            background: var(--gray-50);
+            font-family: inherit;
+            color: var(--gray-500);
+            flex: 1;
+            min-width: 200px;
+            transition: var(--transition);
+        }
+        .location-selector select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(10, 126, 140, 0.08);
+        }
+        .location-selector .btn-location {
+            padding: 8px 20px;
+            background: linear-gradient(145deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.85rem;
+            font-family: inherit;
+        }
+        .location-selector .btn-location:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(10, 126, 140, 0.3);
+        }
+
+        /* ===== MODAL ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 126, 140, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: #fff;
+            border-radius: var(--radius-lg);
+            width: 90%;
+            max-width: 560px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: scaleUp 0.4s ease;
+        }
+        .modal-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 { font-size: 1.1rem; font-weight: 700; color: var(--gray-500); }
+        .modal-header .close {
+            background: none;
+            border: none;
+            font-size: 1.6rem;
+            cursor: pointer;
+            color: var(--gray-400);
+            transition: var(--transition);
+            padding: 4px;
+        }
+        .modal-header .close:hover { color: var(--gray-500); }
+        .modal-body { padding: 24px; }
+
+        .modal-body .form-group { margin-bottom: 14px; }
+        .modal-body .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+            color: var(--gray-500);
+            font-size: 0.85rem;
+        }
+        .modal-body .form-group label .required { color: var(--danger); }
+        .modal-body .form-group input,
+        .modal-body .form-group textarea,
+        .modal-body .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            transition: var(--transition);
+            font-family: inherit;
+            background: var(--gray-50);
+        }
+        .modal-body .form-group input:focus,
+        .modal-body .form-group textarea:focus,
+        .modal-body .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(10, 126, 140, 0.08);
+        }
+
+        .file-upload {
+            position: relative;
+            border: 2px dashed var(--gray-200);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .file-upload:hover {
+            border-color: var(--primary);
+            background: var(--primary-bg);
+        }
+        .file-upload input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        .file-upload .file-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: var(--gray-400);
+        }
+        .file-upload .file-label i {
+            font-size: 2.5rem;
+            color: var(--primary);
+        }
+        .file-upload .file-label span {
+            font-size: 0.9rem;
+        }
+        .file-upload .file-preview {
+            margin-top: 12px;
+            display: none;
+        }
+        .file-upload .file-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            border: 1px solid var(--gray-200);
+        }
+
+        .btn-submit-modal { width: 100%; margin-top: 4px; }
+
+        /* ===== NOTIFICATION DROPDOWN ===== */
+        .notif-dropdown {
+            display: none;
+            position: absolute;
+            top: 56px;
+            right: 0;
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            width: 360px;
+            max-height: 420px;
+            overflow: hidden;
+            z-index: 200;
+            border: 1px solid var(--gray-200);
+        }
+        .notif-dropdown.active { display: block; }
+        .notif-dropdown .header {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .notif-dropdown .header h4 { font-weight: 600; color: var(--gray-500); font-size: 0.95rem; }
+        .notif-dropdown .header .mark-read {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .notif-dropdown .header .mark-read:hover { text-decoration: underline; }
+        .notif-dropdown .list { max-height: 340px; overflow-y: auto; }
+        .notif-dropdown .list .item {
+            padding: 12px 20px;
+            display: flex;
+            gap: 12px;
+            border-bottom: 1px solid var(--gray-100);
+            transition: var(--transition);
+        }
+        .notif-dropdown .list .item:hover { background: var(--gray-50); }
+        .notif-dropdown .list .item.unread { background: var(--primary-bg); }
+        .notif-dropdown .list .item i { font-size: 1.1rem; color: var(--primary); margin-top: 2px; }
+        .notif-dropdown .list .item p { font-size: 0.85rem; color: var(--gray-500); }
+        .notif-dropdown .list .item .time { font-size: 0.7rem; color: var(--gray-400); }
+
+        /* ===== MEMBERSHIP CARD ===== */
+        .membership-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 16px;
+        }
+        .membership-card {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 24px 20px;
+            text-align: center;
+            border: 2px solid var(--gray-200);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        .membership-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+        .membership-card.active {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(10, 126, 140, 0.1);
+        }
+        .membership-card .price {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .membership-card .price span {
+            font-size: 0.9rem;
+            font-weight: 400;
+            color: var(--gray-400);
+        }
+        .membership-card .plan-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 8px 0;
+        }
+        .membership-card .features {
+            list-style: none;
+            text-align: left;
+            margin: 12px 0;
+        }
+        .membership-card .features li {
+            padding: 4px 0;
+            font-size: 0.85rem;
+            color: var(--gray-400);
+        }
+        .membership-card .features li i {
+            color: var(--success);
+            margin-right: 8px;
+        }
+        .membership-card .btn-select {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+        .membership-card .btn-select.free {
+            background: var(--gray-100);
+            color: var(--gray-400);
+        }
+        .membership-card .btn-select.basic {
+            background: linear-gradient(145deg, var(--gold), #d68910);
+            color: #fff;
+        }
+        .membership-card .btn-select.premium {
+            background: linear-gradient(145deg, var(--premium), #6c3483);
+            color: #fff;
+        }
+        .membership-card .btn-select:hover {
+            transform: scale(1.02);
+        }
+        .membership-card .badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .membership-card .badge.popular {
+            background: var(--gold);
+            color: #fff;
+        }
+        .membership-card .badge.best {
+            background: var(--premium);
+            color: #fff;
+        }
+
+        /* ===== CONDITION BADGES ===== */
+        .condition-badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .condition-badge.new {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .condition-badge.good {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .condition-badge.fair {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .condition-badge.poor {
+            background: #fecaca;
+            color: #991b1b;
+        }
+
+        /* ===== RATING STARS ===== */
+        .rating-stars {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .rating-stars i {
+            color: var(--gray-300);
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .rating-stars i:hover,
+        .rating-stars i.active {
+            color: var(--gold);
+            transform: scale(1.15);
+        }
+        .rating-stars i.inactive {
+            color: var(--gray-300);
+        }
+        .rating-text {
+            font-size: 0.75rem;
+            color: var(--gray-400);
+            margin-left: 8px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .membership-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+            }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-close { display: block; }
+            .sidebar-overlay.active { display: block; }
+            .main-content { margin-left: 0 !important; }
+            .header-left .menu-toggle { display: block; }
+
+            .dashboard-header {
+                padding: 12px 16px;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .header-right {
+                width: 100%;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .header-search input {
+                width: 100%;
+            }
+            .header-search input:focus { width: 100%; }
+
+            .content-wrapper { padding: 16px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+            .stat-card { padding: 14px; }
+            .stat-info h3 { font-size: 1.2rem; }
+            .documents-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+            .page-header { flex-direction: column; align-items: flex-start; }
+            .filter-group { width: 100%; }
+            .notif-dropdown { width: 320px; right: -60px; }
+
+            .exchange-card { flex-direction: column; gap: 10px; align-items: flex-start; }
+            .request-card { flex-direction: column; gap: 10px; align-items: flex-start; }
+            .request-actions { width: 100%; }
+            .request-actions button { flex: 1; }
+
+            .modal-content { width: 95%; }
+            .user-profile .name { display: none; }
+
+            .login-card { padding: 28px 20px; }
+            .form-row { grid-template-columns: 1fr; }
+            .brand h1 { font-size: 1.8rem; }
+            .brand .logo { width: 64px; height: 64px; font-size: 2.2rem; }
+            .tab-btn { font-size: 0.8rem; padding: 9px 6px; }
+            .tab-btn i { margin-right: 4px; }
+
+            .membership-grid { grid-template-columns: 1fr; }
+            .location-selector { flex-direction: column; align-items: stretch; }
+            .location-selector select { min-width: unset; }
+
+            .history-item { flex-direction: column; align-items: flex-start; }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .documents-grid { grid-template-columns: 1fr; }
+            .header-left h1 { font-size: 1.1rem; }
+            .header-left p { font-size: 0.7rem; }
+            .profile-stats { flex-direction: column; gap: 12px; }
+            .profile-avatar img { width: 90px; height: 90px; }
+            .notif-dropdown { width: 290px; right: -40px; }
+            .profile-card { padding: 24px; }
+
+            .login-card { padding: 20px 14px; }
+            .form-options { flex-direction: column; align-items: flex-start; }
+            .brand h1 { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== NOTIFICATION ===== -->
+    <div id="notificationContainer"></div>
+
+    <!-- ===== LOADING ===== -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Đang xử lý...</p>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- LOGIN PAGE -->
+    <!-- ========================================== -->
+    <div id="loginPage">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="brand">
+                    <div class="logo"><i class="fas fa-graduation-cap"></i></div>
+                    <h1>E-<span>Logistics</span></h1>
+                    <p>Nền tảng trao đổi tài liệu học tập</p>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="login"><i class="fas fa-sign-in-alt"></i> Đăng nhập</button>
+                    <button class="tab-btn" data-tab="register"><i class="fas fa-user-plus"></i> Đăng ký</button>
+                </div>
+
+                <!-- Tab: Login -->
+                <div class="page-form active" id="tab-login">
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label>Mã số sinh viên <span class="required">*</span></label>
+                            <div class="input-wrapper">
+                                <input type="text" id="loginStudentId" placeholder="Nhập mã số sinh viên" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Mật khẩu <span class="required">*</span></label>
+                            <div class="input-wrapper">
+                                <input type="password" id="loginPassword" placeholder="Nhập mật khẩu" required>
+                                <button type="button" class="toggle-password" onclick="togglePassword('loginPassword', this)">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-options">
+                            <label class="remember">
+                                <input type="checkbox" checked>
+                                <span>Ghi nhớ đăng nhập</span>
+                            </label>
+                            <a href="#" class="forgot">Quên mật khẩu?</a>
+                        </div>
+                        <button type="submit" class="btn-submit">
+                            <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                        </button>
+                    </form>
+                    <div class="login-footer">
+                        Chưa có tài khoản? <a class="switch-tab" data-tab="register">Đăng ký ngay</a>
+                    </div>
+                </div>
+
+                <!-- Tab: Register -->
+                <div class="page-form" id="tab-register">
+                    <form id="registerForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Họ và tên <span class="required">*</span></label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="fullName" placeholder="Nhập họ và tên" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Mã số SV <span class="required">*</span></label>
+                                <div class="input-wrapper">
+                                    <input type="text" id="studentId" placeholder="Nhập mã số sinh viên" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Email <span class="required">*</span></label>
+                                <div class="input-wrapper">
+                                    <input type="email" id="email" placeholder="Nhập email" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Ngành học <span class="required">*</span></label>
+                                <div class="input-wrapper">
+                                    <select id="major" required>
+                                        <option value="">Chọn ngành học</option>
+                                        <option value="Công nghệ thông tin">Công nghệ thông tin</option>
+                                        <option value="Kỹ thuật xây dựng">Kỹ thuật xây dựng</option>
+                                        <option value="Kỹ thuật giao thông">Kỹ thuật giao thông</option>
+                                        <option value="Kỹ thuật điện tử">Kỹ thuật điện tử</option>
+                                        <option value="Kỹ thuật cơ khí">Kỹ thuật cơ khí</option>
+                                        <option value="Quản lý vận tải">Quản lý vận tải</option>
+                                        <option value="Kinh tế vận tải">Kinh tế vận tải</option>
+                                        <option value="Logistics và Quản lý chuỗi cung ứng">Logistics và Quản lý chuỗi cung ứng</option>
+                                        <option value="Công nghệ sinh học">Công nghệ sinh học</option>
+                                        <option value="Tự động hóa">Tự động hóa</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Mật khẩu <span class="required">*</span></label>
+                                <div class="input-wrapper">
+                                    <input type="password" id="password" placeholder="Tối thiểu 6 ký tự" required>
+                                    <button type="button" class="toggle-password" onclick="togglePassword('password', this)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Xác nhận <span class="required">*</span></label>
+                                <div class="input-wrapper">
+                                    <input type="password" id="confirmPassword" placeholder="Nhập lại mật khẩu" required>
+                                    <button type="button" class="toggle-password" onclick="togglePassword('confirmPassword', this)">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-submit">
+                            <i class="fas fa-user-plus"></i> Đăng ký tài khoản
+                        </button>
+                    </form>
+                    <div class="login-footer">
+                        Đã có tài khoản? <a class="switch-tab" data-tab="login">Đăng nhập ngay</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- DASHBOARD PAGE -->
+    <!-- ========================================== -->
+    <div id="dashboardPage">
+
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <a href="#" class="brand">
+                    <span class="logo"><i class="fas fa-graduation-cap"></i></span>
+                    E-<span>Logistics</span>
+                </a>
+                <button class="sidebar-close" id="sidebarClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-label">Điều hướng</div>
+                <ul>
+                    <li><a class="active" data-page="dashboard"><i class="fas fa-th-large"></i> Tổng quan</a></li>
+                    <li><a data-page="documents"><i class="fas fa-file-alt"></i> Tài liệu</a></li>
+                    <li><a data-page="exchange"><i class="fas fa-exchange-alt"></i> Trao đổi</a></li>
+                    <li><a data-page="requests"><i class="fas fa-bell"></i> Yêu cầu <span class="badge">5</span></a></li>
+                    <li><a data-page="messages"><i class="fas fa-envelope"></i> Tin nhắn <span class="badge">12</span></a></li>
+                    <li><a data-page="history"><i class="fas fa-history"></i> Lịch sử <span class="badge gold">3</span></a></li>
+                    <li><a data-page="profile"><i class="fas fa-user"></i> Hồ sơ</a></li>
+                    <li><a data-page="membership"><i class="fas fa-crown"></i> Nâng cấp <span class="badge gold">VIP</span></a></li>
+                </ul>
+                <div class="sidebar-footer">
+                    <ul>
+                        <li><a id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Đăng xuất</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent">
+
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div class="header-left">
+                    <button class="menu-toggle" id="menuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div>
+                        <h1 id="pageTitle">Tổng quan</h1>
+                        <p id="pageSubtitle" class="user-greeting">Chào mừng bạn đến với E-Logistics</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="header-search">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Tìm kiếm tài liệu..." id="searchInput">
+                    </div>
+                    <div class="header-actions">
+                        <button class="notif-btn" id="notifBtn">
+                            <i class="fas fa-bell"></i>
+                            <span class="dot"></span>
+                        </button>
+                        <div class="user-profile" id="userProfile">
+                            <img src="https://ui-avatars.com/api/?name=User&background=0a7e8c&color=fff&size=40" alt="User" id="userAvatar">
+                            <span class="name" id="userName">Nguyễn Văn A</span>
+                            <span class="membership-badge free" id="membershipBadge">Miễn phí</span>
+                            <i class="fas fa-chevron-down chevron"></i>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="content-wrapper">
+
+                <!-- ===== PAGE: DASHBOARD ===== -->
+                <div class="page active" id="page-dashboard">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon blue"><i class="fas fa-file-alt"></i></div>
+                            <div class="stat-info">
+                                <h3>1,234</h3>
+                                <p>Tổng tài liệu</p>
+                                <span class="change positive"><i class="fas fa-arrow-up"></i> 12%</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon green"><i class="fas fa-exchange-alt"></i></div>
+                            <div class="stat-info">
+                                <h3>456</h3>
+                                <p>Giao dịch</p>
+                                <span class="change positive"><i class="fas fa-arrow-up"></i> 8%</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon orange"><i class="fas fa-users"></i></div>
+                            <div class="stat-info">
+                                <h3>789</h3>
+                                <p>Thành viên</p>
+                                <span class="change positive"><i class="fas fa-arrow-up"></i> 15%</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon gold"><i class="fas fa-star"></i></div>
+                            <div class="stat-info">
+                                <h3>4.8</h3>
+                                <p>Đánh giá</p>
+                                <span class="change positive"><i class="fas fa-star"></i> 4.8/5</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location Selector -->
+                    <div class="location-selector">
+                        <label for="defaultLocation">
+                            <i class="fas fa-map-marker-alt"></i> Địa điểm trao đổi:
+                        </label>
+                        <select id="defaultLocation">
+                            <option value="Thư viện trường - Tầng 1">📚 Thư viện trường - Tầng 1</option>
+                            <option value="Thư viện trường - Tầng 2">📚 Thư viện trường - Tầng 2</option>
+                            <option value="Thư viện trường - Tầng 3">📚 Thư viện trường - Tầng 3</option>
+                            <option value="Sảnh chính A">🏛️ Sảnh chính A</option>
+                            <option value="Sảnh chính B">🏛️ Sảnh chính B</option>
+                            <option value="Quán cà phê sinh viên">☕ Quán cà phê sinh viên</option>
+                            <option value="Khu vực tự học">📖 Khu vực tự học</option>
+                            <option value="Nhà ăn sinh viên">🍽️ Nhà ăn sinh viên</option>
+                        </select>
+                        <button class="btn-location" onclick="updateDefaultLocation()">
+                            <i class="fas fa-save"></i> Lưu
+                        </button>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-clock"></i> Tài liệu mới nhất</h3>
+                                <button class="view-all">Xem tất cả</button>
+                            </div>
+                            <div class="card-body">
+                                <div class="doc-item">
+                                    <img src="https://via.placeholder.com/50x50/0a7e8c/fff?text=PDF" class="doc-thumb" alt="Thumb">
+                                    <div class="doc-info">
+                                        <h4>Giáo trình Toán cao cấp</h4>
+                                        <p>Nguyễn Văn A • 2 giờ trước</p>
+                                    </div>
+                                    <span class="doc-status available">Còn</span>
+                                </div>
+                                <div class="doc-item">
+                                    <img src="https://via.placeholder.com/50x50/f39c12/fff?text=VIP" class="doc-thumb" alt="Thumb">
+                                    <div class="doc-info">
+                                        <h4>Ngân hàng đề thi (VIP)</h4>
+                                        <p>Trần Thị B • 5 giờ trước</p>
+                                    </div>
+                                    <span class="doc-status premium">Cao cấp</span>
+                                </div>
+                                <div class="doc-item">
+                                    <img src="https://via.placeholder.com/50x50/8e44ad/fff?text=GEM" class="doc-thumb" alt="Thumb">
+                                    <div class="doc-info">
+                                        <h4>Hướng dẫn giải chi tiết</h4>
+                                        <p>Lê Văn C • 1 ngày trước</p>
+                                    </div>
+                                    <span class="doc-status premium">Cao cấp</span>
+                                </div>
+                                <div class="doc-item">
+                                    <img src="https://via.placeholder.com/50x50/00b894/fff?text=DOC" class="doc-thumb" alt="Thumb">
+                                    <div class="doc-info">
+                                        <h4>Bài giảng Cơ sở dữ liệu</h4>
+                                        <p>Phạm Thị D • 2 ngày trước</p>
+                                    </div>
+                                    <span class="doc-status available">Còn</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-exchange-alt"></i> Trao đổi nhanh</h3>
+                                <button class="view-all">Xem tất cả</button>
+                            </div>
+                            <div class="card-body">
+                                <div class="exchange-item">
+                                    <div class="exchange-user">
+                                        <img src="https://ui-avatars.com/api/?name=Mai+Van+D&background=0a7e8c&color=fff&size=40" alt="User">
+                                        <div>
+                                            <h4>Mai Văn D</h4>
+                                            <p>Đang tìm giáo trình HTML</p>
+                                        </div>
+                                    </div>
+                                    <button class="btn-small">Trao đổi</button>
+                                </div>
+                                <div class="exchange-item">
+                                    <div class="exchange-user">
+                                        <img src="https://ui-avatars.com/api/?name=Hoang+Thi+E&background=00b894&color=fff&size=40" alt="User">
+                                        <div>
+                                            <h4>Hoàng Thị E</h4>
+                                            <p>Cần tài liệu Cơ học</p>
+                                        </div>
+                                    </div>
+                                    <button class="btn-small">Trao đổi</button>
+                                </div>
+                                <div class="exchange-item">
+                                    <div class="exchange-user">
+                                        <img src="https://ui-avatars.com/api/?name=Pham+Van+F&background=f5a623&color=fff&size=40" alt="User">
+                                        <div>
+                                            <h4>Phạm Văn F</h4>
+                                            <p>Cho mượn sách Tiếng Anh</p>
+                                        </div>
+                                    </div>
+                                    <button class="btn-small gold">Trao đổi</button>
+                                </div>
+                                <div class="exchange-item">
+                                    <div class="exchange-user">
+                                        <img src="https://ui-avatars.com/api/?name=Nguyen+Thi+G&background=6c5ce7&color=fff&size=40" alt="User">
+                                        <div>
+                                            <h4>Nguyễn Thị G</h4>
+                                            <p>Tìm tài liệu Mạng máy tính</p>
+                                        </div>
+                                    </div>
+                                    <button class="btn-small premium">Trao đổi</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Banner quảng cáo -->
+                    <div style="margin-top:24px;background:linear-gradient(145deg,var(--gold-light),#fdebd0);border-radius:var(--radius);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;border:1px solid #f5cba7;">
+                        <div>
+                            <h3 style="color:#d68910;"><i class="fas fa-crown"></i> Nâng cấp lên thành viên VIP</h3>
+                            <p style="color:#7f6000;">Nhận ưu đãi đặc biệt: Tải không giới hạn, ưu tiên hiển thị, hỗ trợ 24/7</p>
+                        </div>
+                        <button class="btn-primary gold" onclick="navigateTo('membership')">
+                            <i class="fas fa-arrow-right"></i> Nâng cấp ngay
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ===== PAGE: DOCUMENTS ===== -->
+                <div class="page" id="page-documents">
+                    <div class="page-header">
+                        <h2>Quản lý tài liệu</h2>
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                            <button class="btn-primary" id="addDocBtn">
+                                <i class="fas fa-plus"></i> Thêm tài liệu
+                            </button>
+                            <button class="btn-primary gold" id="addPremiumDocBtn">
+                                <i class="fas fa-crown"></i> Thêm tài liệu cao cấp
+                            </button>
+                        </div>
+                    </div>
+                    <div class="documents-grid" id="documentsGrid">
+                        <!-- Document cards sẽ được tạo tự động -->
+                    </div>
+                </div>
+
+                <!-- ===== PAGE: EXCHANGE ===== -->
+                <div class="page" id="page-exchange">
+                    <div class="page-header">
+                        <h2>Trao đổi tài liệu</h2>
+                        <div class="filter-group">
+                            <button class="filter-btn active" data-filter="all">Tất cả</button>
+                            <button class="filter-btn" data-filter="pending">Đang chờ</button>
+                            <button class="filter-btn" data-filter="approved">Đã duyệt</button>
+                            <button class="filter-btn" data-filter="completed">Hoàn thành</button>
+                        </div>
+                    </div>
+                    <div class="exchange-list" id="exchangeList">
+                        <div class="exchange-card" data-status="pending">
+                            <div class="info">
+                                <h4>Giáo trình Toán cao cấp</h4>
+                                <p><i class="fas fa-user"></i> Trần Văn X • <i class="fas fa-clock"></i> Hôm nay</p>
+                            </div>
+                            <span class="doc-status pending">Đang chờ</span>
+                        </div>
+                        <div class="exchange-card" data-status="approved">
+                            <div class="info">
+                                <h4>Vật lý đại cương</h4>
+                                <p><i class="fas fa-user"></i> Lê Thị Y • <i class="fas fa-clock"></i> Hôm qua</p>
+                            </div>
+                            <span class="doc-status available">Đã duyệt</span>
+                        </div>
+                        <div class="exchange-card" data-status="completed">
+                            <div class="info">
+                                <h4>Kỹ thuật lập trình</h4>
+                                <p><i class="fas fa-user"></i> Phạm Văn Z • <i class="fas fa-clock"></i> 2 ngày trước</p>
+                            </div>
+                            <span class="doc-status exchanged">Hoàn thành</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== PAGE: REQUESTS ===== -->
+                <div class="page" id="page-requests">
+                    <div class="page-header">
+                        <h2>Yêu cầu trao đổi</h2>
+                        <button class="btn-primary outline" id="markAllRead">
+                            <i class="fas fa-check-double"></i> Đánh dấu đã đọc
+                        </button>
+                    </div>
+                    <div class="requests-list" id="requestsList">
+                        <!-- Request cards sẽ được tạo tự động -->
+                    </div>
+                </div>
+
+                <!-- ===== PAGE: MESSAGES ===== -->
+                <div class="page" id="page-messages">
+                    <div class="page-header">
+                        <h2>Tin nhắn</h2>
+                        <button class="btn-primary" id="newMsgBtn">
+                            <i class="fas fa-plus"></i> Tin nhắn mới
+                        </button>
+                    </div>
+                    <div class="messages-list" id="messagesList">
+                        <!-- Message cards sẽ được tạo tự động -->
+                    </div>
+                </div>
+
+                <!-- ===== PAGE: HISTORY ===== -->
+                <div class="page" id="page-history">
+                    <div class="page-header">
+                        <h2>Lịch sử trao đổi</h2>
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                            <button class="btn-primary outline" onclick="filterHistory('all')">
+                                <i class="fas fa-list"></i> Tất cả
+                            </button>
+                            <button class="btn-primary outline" onclick="filterHistory('completed')">
+                                <i class="fas fa-check-circle"></i> Hoàn thành
+                            </button>
+                            <button class="btn-primary outline" onclick="filterHistory('pending')">
+                                <i class="fas fa-clock"></i> Đang chờ
+                            </button>
+                        </div>
+                    </div>
+                    <div class="history-list" id="historyList">
+                        <!-- History items sẽ được tạo tự động -->
+                    </div>
+                </div>
+
+                <!-- ===== PAGE: PROFILE ===== -->
+                <div class="page" id="page-profile">
+                    <div class="page-header">
+                        <h2>Hồ sơ cá nhân</h2>
+                        <button class="btn-primary outline" id="editProfileBtn">
+                            <i class="fas fa-edit"></i> Chỉnh sửa
+                        </button>
+                    </div>
+                    <div class="profile-container">
+                        <div class="profile-card">
+                            <div class="profile-avatar">
+                                <img src="https://ui-avatars.com/api/?name=Nguyen+Van+A&background=0a7e8c&color=fff&size=150" alt="Profile" id="profileAvatar">
+                                <button class="change-btn">
+                                    <i class="fas fa-camera"></i>
+                                </button>
+                            </div>
+                            <h3 id="profileName">Nguyễn Văn A</h3>
+                            <p class="email" id="profileEmail">nguyenvana@ut.edu.vn</p>
+                            <p class="role" id="profileMajor">Sinh viên - Công nghệ thông tin</p>
+                            <div style="margin:8px 0;">
+                                <span class="membership-badge free" id="profileMembershipBadge" style="font-size:0.8rem;padding:4px 16px;border-radius:20px;font-weight:700;">Miễn phí</span>
+                            </div>
+                            <div class="profile-stats">
+                                <div>
+                                    <span class="num">45</span>
+                                    <span class="label">Tài liệu đã đăng</span>
+                                </div>
+                                <div>
+                                    <span class="num">32</span>
+                                    <span class="label">Đã trao đổi</span>
+                                </div>
+                                <div>
+                                    <span class="num">4.9</span>
+                                    <span class="label">Đánh giá</span>
+                                </div>
+                            </div>
+                            <div class="profile-bio">
+                                <h4>Giới thiệu</h4>
+                                <p>Sinh viên năm cuối tại trường Đại học Giao thông Vận tải TP. HCM. Đam mê công nghệ và chia sẻ kiến thức.</p>
+                            </div>
+                            <div class="profile-skills">
+                                <span class="tag">Python</span>
+                                <span class="tag">JavaScript</span>
+                                <span class="tag">React</span>
+                                <span class="tag">Node.js</span>
+                                <span class="tag">Database</span>
+                            </div>
+                            <button class="btn-primary gold" style="margin-top:16px;" onclick="navigateTo('membership')">
+                                <i class="fas fa-crown"></i> Nâng cấp tài khoản
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== PAGE: MEMBERSHIP ===== -->
+                <div class="page" id="page-membership">
+                    <div class="page-header">
+                        <h2>Nâng cấp thành viên</h2>
+                        <p style="color:var(--gray-400);">Chọn gói phù hợp để trải nghiệm nhiều tính năng hơn</p>
+                    </div>
+
+                    <div class="membership-grid">
+                        <!-- Gói Miễn phí -->
+                        <div class="membership-card active" id="plan-free">
+                            <div class="badge" style="background:var(--gray-200);color:var(--gray-400);">Hiện tại</div>
+                            <div class="plan-name">Miễn phí</div>
+                            <div class="price">0 <span>đ</span></div>
+                            <ul class="features">
+                                <li><i class="fas fa-check"></i> Đăng 5 tài liệu/tháng</li>
+                                <li><i class="fas fa-check"></i> Trao đổi 3 lần/tháng</li>
+                                <li><i class="fas fa-check"></i> Xem tài liệu cơ bản</li>
+                                <li><i class="fas fa-times" style="color:var(--danger);"></i> Tài liệu cao cấp</li>
+                                <li><i class="fas fa-times" style="color:var(--danger);"></i> Hỗ trợ ưu tiên</li>
+                            </ul>
+                            <button class="btn-select free" disabled>Đang sử dụng</button>
+                        </div>
+
+                        <!-- Gói Cơ bản -->
+                        <div class="membership-card" id="plan-basic">
+                            <div class="badge popular">Phổ biến</div>
+                            <div class="plan-name">Cơ bản</div>
+                            <div class="price">30,000 <span>đ/tháng</span></div>
+                            <ul class="features">
+                                <li><i class="fas fa-check"></i> Đăng 20 tài liệu/tháng</li>
+                                <li><i class="fas fa-check"></i> Trao đổi 15 lần/tháng</li>
+                                <li><i class="fas fa-check"></i> Xem tài liệu nâng cao</li>
+                                <li><i class="fas fa-check"></i> Tài liệu cao cấp</li>
+                                <li><i class="fas fa-times" style="color:var(--danger);"></i> Hỗ trợ 24/7</li>
+                            </ul>
+                            <button class="btn-select basic" onclick="upgradePlan('basic')">Nâng cấp ngay</button>
+                        </div>
+
+                        <!-- Gói Cao cấp -->
+                        <div class="membership-card" id="plan-premium">
+                            <div class="badge best">Tốt nhất</div>
+                            <div class="plan-name">Cao cấp</div>
+                            <div class="price">60,000 <span>đ/tháng</span></div>
+                            <ul class="features">
+                                <li><i class="fas fa-check"></i> Đăng không giới hạn</li>
+                                <li><i class="fas fa-check"></i> Trao đổi không giới hạn</li>
+                                <li><i class="fas fa-check"></i> Xem tất cả tài liệu</li>
+                                <li><i class="fas fa-check"></i> Tài liệu cao cấp</li>
+                                <li><i class="fas fa-check"></i> Hỗ trợ 24/7</li>
+                                <li><i class="fas fa-check"></i> Ưu tiên hiển thị</li>
+                            </ul>
+                            <button class="btn-select premium" onclick="upgradePlan('premium')">Nâng cấp ngay</button>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:24px;background:var(--gray-50);border-radius:var(--radius);padding:20px;border:1px solid var(--gray-200);">
+                        <h4><i class="fas fa-info-circle" style="color:var(--primary);"></i> Lưu ý</h4>
+                        <ul style="color:var(--gray-400);font-size:0.9rem;margin-top:8px;padding-left:20px;">
+                            <li>Thanh toán qua chuyển khoản ngân hàng hoặc ví điện tử</li>
+                            <li>Gói cơ bản và cao cấp có thể hủy bất cứ lúc nào</li>
+                            <li>Hoàn tiền trong vòng 7 ngày nếu không hài lòng</li>
+                            <li>Mọi người đều có thể sử dụng miễn phí các tính năng cơ bản</li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL: Add Document -->
+    <!-- ========================================== -->
+    <div class="modal" id="addDocModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus-circle" style="color:var(--primary);margin-right:8px;"></i> Thêm tài liệu mới</h3>
+                <button class="close" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addDocForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>Tên tài liệu <span class="required">*</span></label>
+                        <input type="text" id="docTitle" placeholder="Nhập tên tài liệu" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Môn học <span class="required">*</span></label>
+                        <input type="text" id="docCourse" placeholder="Nhập tên môn học" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tác giả <span class="required">*</span></label>
+                        <input type="text" id="docAuthor" placeholder="Nhập tên tác giả" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tình trạng sách/tài liệu <span class="required">*</span></label>
+                        <select id="docCondition" required>
+                            <option value="new">Mới - Chưa sử dụng</option>
+                            <option value="good" selected>Tốt - Còn mới 90%</option>
+                            <option value="fair">Khá - Còn 70%</option>
+                            <option value="poor">Cũ - Có dấu hiệu sử dụng</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Địa điểm trao đổi <span class="required">*</span></label>
+                        <select id="docLocation" required>
+                            <option value="Thư viện trường - Tầng 1">📚 Thư viện trường - Tầng 1</option>
+                            <option value="Thư viện trường - Tầng 2">📚 Thư viện trường - Tầng 2</option>
+                            <option value="Thư viện trường - Tầng 3">📚 Thư viện trường - Tầng 3</option>
+                            <option value="Sảnh chính A">🏛️ Sảnh chính A</option>
+                            <option value="Sảnh chính B">🏛️ Sảnh chính B</option>
+                            <option value="Quán cà phê sinh viên">☕ Quán cà phê sinh viên</option>
+                            <option value="Khu vực tự học">📖 Khu vực tự học</option>
+                            <option value="Nhà ăn sinh viên">🍽️ Nhà ăn sinh viên</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Loại tài liệu</label>
+                        <select id="docType">
+                            <option value="free">Miễn phí</option>
+                            <option value="premium">Cao cấp (có phí)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="priceGroup">
+                        <label>Giá (nếu là cao cấp)</label>
+                        <input type="number" id="docPrice" placeholder="Nhập giá (VNĐ)" value="50000">
+                    </div>
+                    <div class="form-group">
+                        <label>Mô tả</label>
+                        <textarea id="docDescription" rows="3" placeholder="Mô tả chi tiết về tài liệu"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Hình ảnh sách/tài liệu</label>
+                        <div class="file-upload" id="imageUpload">
+                            <input type="file" id="docImage" accept="image/*">
+                            <div class="file-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Chọn ảnh sách/tài liệu</span>
+                                <small style="color:var(--gray-400);">(JPG, PNG, GIF - Tối đa 5MB)</small>
+                            </div>
+                            <div class="file-preview" id="imagePreview">
+                                <img id="previewImg" src="#" alt="Xem trước">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>File đính kèm (PDF, DOC, ...)</label>
+                        <div class="file-upload" id="fileUpload">
+                            <input type="file" id="docFile" accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar">
+                            <div class="file-label">
+                                <i class="fas fa-file-upload"></i>
+                                <span>Chọn file tài liệu</span>
+                                <small style="color:var(--gray-400);">(PDF, DOC, PPT, ZIP - Tối đa 20MB)</small>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary btn-submit-modal">
+                        <i class="fas fa-upload"></i> Đăng tài liệu
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL: Premium Document -->
+    <!-- ========================================== -->
+    <div class="modal" id="addPremiumDocModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-crown" style="color:var(--gold);margin-right:8px;"></i> Thêm tài liệu cao cấp</h3>
+                <button class="close" id="closePremiumModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addPremiumDocForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>Tên tài liệu <span class="required">*</span></label>
+                        <input type="text" id="premiumTitle" placeholder="Nhập tên tài liệu" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Môn học <span class="required">*</span></label>
+                        <input type="text" id="premiumCourse" placeholder="Nhập tên môn học" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tác giả <span class="required">*</span></label>
+                        <input type="text" id="premiumAuthor" placeholder="Nhập tên tác giả" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Tình trạng sách/tài liệu <span class="required">*</span></label>
+                        <select id="premiumCondition" required>
+                            <option value="new">Mới - Chưa sử dụng</option>
+                            <option value="good" selected>Tốt - Còn mới 90%</option>
+                            <option value="fair">Khá - Còn 70%</option>
+                            <option value="poor">Cũ - Có dấu hiệu sử dụng</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Địa điểm trao đổi <span class="required">*</span></label>
+                        <select id="premiumLocation" required>
+                            <option value="Thư viện trường - Tầng 1">📚 Thư viện trường - Tầng 1</option>
+                            <option value="Thư viện trường - Tầng 2">📚 Thư viện trường - Tầng 2</option>
+                            <option value="Thư viện trường - Tầng 3">📚 Thư viện trường - Tầng 3</option>
+                            <option value="Sảnh chính A">🏛️ Sảnh chính A</option>
+                            <option value="Sảnh chính B">🏛️ Sảnh chính B</option>
+                            <option value="Quán cà phê sinh viên">☕ Quán cà phê sinh viên</option>
+                            <option value="Khu vực tự học">📖 Khu vực tự học</option>
+                            <option value="Nhà ăn sinh viên">🍽️ Nhà ăn sinh viên</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Giá bán <span class="required">*</span></label>
+                        <input type="number" id="premiumPrice" placeholder="Nhập giá (VNĐ)" required value="50000">
+                    </div>
+                    <div class="form-group">
+                        <label>Mô tả</label>
+                        <textarea id="premiumDescription" rows="3" placeholder="Mô tả chi tiết về tài liệu cao cấp"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Hình ảnh sách/tài liệu</label>
+                        <div class="file-upload" id="premiumImageUpload">
+                            <input type="file" id="premiumImage" accept="image/*">
+                            <div class="file-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Chọn ảnh sách/tài liệu</span>
+                                <small style="color:var(--gray-400);">(JPG, PNG, GIF - Tối đa 5MB)</small>
+                            </div>
+                            <div class="file-preview" id="premiumImagePreview">
+                                <img id="premiumPreviewImg" src="#" alt="Xem trước">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>File đính kèm</label>
+                        <div class="file-upload" id="premiumFileUpload">
+                            <input type="file" id="premiumFile" accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar">
+                            <div class="file-label">
+                                <i class="fas fa-file-upload"></i>
+                                <span>Chọn file tài liệu</span>
+                                <small style="color:var(--gray-400);">(PDF, DOC, PPT, ZIP - Tối đa 20MB)</small>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary gold btn-submit-modal">
+                        <i class="fas fa-crown"></i> Đăng tài liệu cao cấp
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL: Rating -->
+    <!-- ========================================== -->
+    <div class="modal" id="ratingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-star" style="color:var(--gold);margin-right:8px;"></i> Đánh giá tài liệu</h3>
+                <button class="close" id="closeRatingModal">&times;</button>
+            </div>
+            <div class="modal-body" style="text-align:center;">
+                <p style="color:var(--gray-400);margin-bottom:16px;">Bạn đánh giá tài liệu này như thế nào?</p>
+                <div class="rating-stars" id="ratingStars" style="justify-content:center;font-size:2rem;gap:8px;margin-bottom:16px;">
+                    <i class="fas fa-star" data-value="1" onclick="setRating(1)"></i>
+                    <i class="fas fa-star" data-value="2" onclick="setRating(2)"></i>
+                    <i class="fas fa-star" data-value="3" onclick="setRating(3)"></i>
+                    <i class="fas fa-star" data-value="4" onclick="setRating(4)"></i>
+                    <i class="fas fa-star" data-value="5" onclick="setRating(5)"></i>
+                </div>
+                <div id="ratingText" style="color:var(--gray-400);margin-bottom:16px;">Chọn số sao để đánh giá</div>
+                <button class="btn-primary" onclick="submitRating()" style="width:100%;">
+                    <i class="fas fa-check"></i> Gửi đánh giá
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- NOTIFICATION DROPDOWN -->
+    <!-- ========================================== -->
+    <div class="notif-dropdown" id="notifDropdown">
+        <div class="header">
+            <h4>Thông báo</h4>
+            <button class="mark-read">Đánh dấu đã đọc</button>
+        </div>
+        <div class="list">
+            <div class="item unread">
+                <i class="fas fa-crown" style="color:var(--gold);"></i>
+                <div>
+                    <p><strong>Ưu đãi VIP:</strong> Giảm 20% khi nâng cấp trong tuần này</p>
+                    <span class="time">5 phút trước</span>
+                </div>
+            </div>
+            <div class="item unread">
+                <i class="fas fa-exchange-alt"></i>
+                <div>
+                    <p>Có yêu cầu trao đổi tài liệu mới</p>
+                    <span class="time">1 giờ trước</span>
+                </div>
+            </div>
+            <div class="item">
+                <i class="fas fa-check-circle"></i>
+                <div>
+                    <p>Yêu cầu trao đổi đã được duyệt</p>
+                    <span class="time">3 giờ trước</span>
+                </div>
+            </div>
+            <div class="item">
+                <i class="fas fa-star" style="color:var(--gold);"></i>
+                <div>
+                    <p>Bạn nhận được đánh giá 5 sao từ Nguyễn Thị B</p>
+                    <span class="time">5 giờ trước</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT -->
+    <!-- ========================================== -->
+    <script>
+        // ============================================
+        // NOTIFICATION
+        // ============================================
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notificationContainer');
+            const existing = container.querySelector('.notification-toast');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = `notification-toast ${type}`;
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                info: 'fa-info-circle',
+                gold: 'fa-crown'
+            };
+            toast.innerHTML = `
+                        <i class="fas ${icons[type] || icons.info}"></i>
+                        <span>${message}</span>
+                    `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.4s ease forwards';
+                setTimeout(() => toast.remove(), 400);
+            }, 4500);
+        }
+
+        // ============================================
+        // TOGGLE PASSWORD
+        // ============================================
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type);
+            const icon = btn.querySelector('i');
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+        }
+
+        // ============================================
+        // IMAGE PREVIEW
+        // ============================================
+        document.getElementById('docImage')?.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    const preview = document.getElementById('imagePreview');
+                    const img = document.getElementById('previewImg');
+                    img.src = ev.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('premiumImage')?.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    const preview = document.getElementById('premiumImagePreview');
+                    const img = document.getElementById('premiumPreviewImg');
+                    img.src = ev.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // ============================================
+        // SHOW/HIDE PRICE FIELD
+        // ============================================
+        document.getElementById('docType')?.addEventListener('change', function() {
+            const priceGroup = document.getElementById('priceGroup');
+            if (this.value === 'premium') {
+                priceGroup.style.display = 'block';
+            } else {
+                priceGroup.style.display = 'none';
+            }
+        });
+
+        // ============================================
+        // UPDATE DEFAULT LOCATION
+        // ============================================
+        function updateDefaultLocation() {
+            const location = document.getElementById('defaultLocation').value;
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (currentUser) {
+                currentUser.defaultLocation = location;
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                const user = users.find(u => u.studentId === currentUser.id);
+                if (user) {
+                    user.defaultLocation = location;
+                    localStorage.setItem('users', JSON.stringify(users));
+                }
+
+                showNotification(`✅ Đã cập nhật địa điểm trao đổi: ${location}`, 'success');
+            } else {
+                showNotification('Vui lòng đăng nhập để lưu địa điểm', 'error');
+            }
+        }
+
+        // ============================================
+        // RATING SYSTEM
+        // ============================================
+        let selectedRating = 0;
+        let currentHistoryItem = null;
+
+        function openRatingModal(itemId) {
+            currentHistoryItem = itemId;
+            selectedRating = 0;
+            document.querySelectorAll('#ratingStars i').forEach(star => {
+                star.classList.remove('active');
+                star.classList.add('inactive');
+            });
+            document.getElementById('ratingText').textContent = 'Chọn số sao để đánh giá';
+            document.getElementById('ratingModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function setRating(value) {
+            selectedRating = value;
+            document.querySelectorAll('#ratingStars i').forEach(star => {
+                const val = parseInt(star.dataset.value);
+                if (val <= value) {
+                    star.classList.add('active');
+                    star.classList.remove('inactive');
+                } else {
+                    star.classList.remove('active');
+                    star.classList.add('inactive');
+                }
+            });
+
+            const texts = ['', 'Rất tệ 😡', 'Tệ 😞', 'Bình thường 😐', 'Tốt 😊', 'Rất tốt 🤩'];
+            document.getElementById('ratingText').textContent = texts[value] || 'Chọn số sao để đánh giá';
+        }
+
+        function submitRating() {
+            if (selectedRating === 0) {
+                showNotification('Vui lòng chọn số sao đánh giá!', 'error');
+                return;
+            }
+
+            // Cập nhật đánh giá trong lịch sử
+            const historyItems = JSON.parse(localStorage.getItem('historyItems') || '[]');
+            const item = historyItems.find(h => h.id === currentHistoryItem);
+            if (item) {
+                item.rating = selectedRating;
+                item.rated = true;
+                localStorage.setItem('historyItems', JSON.stringify(historyItems));
+                renderHistory();
+                showNotification(`⭐ Cảm ơn bạn đã đánh giá ${selectedRating} sao!`, 'gold');
+            }
+
+            document.getElementById('ratingModal').classList.remove('active');
+            document.body.style.overflow = '';
+            currentHistoryItem = null;
+        }
+
+        document.getElementById('closeRatingModal')?.addEventListener('click', function() {
+            document.getElementById('ratingModal').classList.remove('active');
+            document.body.style.overflow = '';
+            currentHistoryItem = null;
+        });
+
+        document.getElementById('ratingModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+                document.body.style.overflow = '';
+                currentHistoryItem = null;
+            }
+        });
+
+        // ============================================
+        // FILTER HISTORY
+        // ============================================
+        function filterHistory(status) {
+            document.querySelectorAll('#historyList .history-item').forEach(item => {
+                if (status === 'all') {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = item.dataset.status === status ? 'flex' : 'none';
+                }
+            });
+        }
+
+        // ============================================
+        // RENDER HISTORY
+        // ============================================
+        function renderHistory() {
+            const container = document.getElementById('historyList');
+            container.innerHTML = '';
+
+            const historyItems = JSON.parse(localStorage.getItem('historyItems') || '[]');
+
+            if (historyItems.length === 0) {
+                container.innerHTML = `
+                            <div style="text-align:center;padding:40px;color:var(--gray-400);">
+                                <i class="fas fa-history" style="font-size:3rem;color:var(--gray-300);margin-bottom:12px;display:block;"></i>
+                                <p>Bạn chưa có lịch sử trao đổi nào</p>
+                                <p style="font-size:0.85rem;">Hãy bắt đầu trao đổi tài liệu ngay hôm nay!</p>
+                            </div>
+                        `;
+                return;
+            }
+
+            const statusMap = {
+                completed: { label: 'Hoàn thành', class: 'completed' },
+                pending: { label: 'Đang chờ', class: 'pending' },
+                cancelled: { label: 'Đã hủy', class: 'cancelled' }
+            };
+
+            historyItems.forEach(item => {
+                const status = statusMap[item.status] || statusMap.pending;
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.dataset.status = item.status;
+                div.innerHTML = `
+                            <div class="h-info">
+                                <h4>${item.title}</h4>
+                                <p><i class="fas fa-user"></i> ${item.partner} • <i class="fas fa-calendar"></i> ${item.date}</p>
+                                <p style="font-size:0.75rem;color:var(--gray-400);margin-top:4px;">
+                                    <i class="fas fa-map-marker-alt"></i> ${item.location || 'Thư viện trường'}
+                                </p>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                                <span class="h-status ${status.class}">${status.label}</span>
+                                ${item.rated ? `
+                                    <div class="h-rating">
+                                        ${[1,2,3,4,5].map(s => `<i class="fas fa-star ${s <= item.rating ? 'active' : 'inactive'}"></i>`).join('')}
+                                        <span class="h-rating-text">(${item.rating}/5)</span>
+                                    </div>
+                                ` : `
+                                    <button class="btn-small gold" onclick="openRatingModal('${item.id}')">
+                                        <i class="fas fa-star"></i> Đánh giá
+                                    </button>
+                                `}
+                            </div>
+                        `;
+                container.appendChild(div);
+            });
+        }
+
+        // ============================================
+        // TAB SWITCHING
+        // ============================================
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tab = this.dataset.tab;
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                document.querySelectorAll('.page-form').forEach(p => p.classList.remove('active'));
+                document.getElementById(`tab-${tab}`).classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.switch-tab').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const tab = this.dataset.tab;
+                document.querySelector(`.tab-btn[data-tab="${tab}"]`)?.click();
+            });
+        });
+
+        // ============================================
+        // LOGIN
+        // ============================================
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const studentId = document.getElementById('loginStudentId').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            if (!studentId || !password) {
+                showNotification('Vui lòng nhập đầy đủ thông tin!', 'error');
+                return;
+            }
+
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const user = users.find(u => u.studentId === studentId && u.password === password);
+
+            if (!user) {
+                showNotification('❌ Sai mã số sinh viên hoặc mật khẩu!', 'error');
+                return;
+            }
+
+            const loginUser = {
+                id: user.studentId,
+                name: user.fullName,
+                email: user.email,
+                major: user.major,
+                defaultLocation: user.defaultLocation || 'Thư viện trường - Tầng 1',
+                membership: user.membership || 'free',
+                loginTime: new Date().toISOString()
+            };
+
+            localStorage.setItem('currentUser', JSON.stringify(loginUser));
+            showNotification('✅ Đăng nhập thành công!', 'success');
+            setTimeout(() => showDashboard(), 600);
+        });
+
+        // ============================================
+        // REGISTER
+        // ============================================
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const fullName = document.getElementById('fullName').value.trim();
+            const studentId = document.getElementById('studentId').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const major = document.getElementById('major').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!fullName || !studentId || !email || !major || !password || !confirmPassword) {
+                showNotification('Vui lòng điền đầy đủ thông tin!', 'error');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showNotification('Mật khẩu xác nhận không khớp!', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showNotification('Mật khẩu phải có ít nhất 6 ký tự!', 'error');
+                return;
+            }
+
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+
+            if (users.find(u => u.studentId === studentId)) {
+                showNotification('Mã số sinh viên đã tồn tại!', 'error');
+                return;
+            }
+
+            if (users.find(u => u.email === email)) {
+                showNotification('Email đã được sử dụng!', 'error');
+                return;
+            }
+
+            const newUser = {
+                fullName,
+                studentId,
+                email,
+                major,
+                defaultLocation: 'Thư viện trường - Tầng 1',
+                password,
+                membership: 'free',
+                createdAt: new Date().toISOString()
+            };
+
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+
+            showNotification('🎉 Đăng ký thành công! Vui lòng đăng nhập.', 'success');
+
+            this.reset();
+            document.querySelector('.tab-btn[data-tab="login"]')?.click();
+            document.getElementById('loginStudentId').value = studentId;
+        });
+
+        // ============================================
+        // SHOW/HIDE PAGES
+        // ============================================
+        function showDashboard() {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('dashboardPage').style.display = 'block';
+
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (currentUser) {
+                updateUserUI(currentUser);
+                if (currentUser.defaultLocation) {
+                    document.getElementById('defaultLocation').value = currentUser.defaultLocation;
+                }
+            }
+
+            initDashboardData();
+            initDashboard();
+            renderHistory();
+        }
+
+        function showLogin() {
+            document.getElementById('loginPage').style.display = 'flex';
+            document.getElementById('dashboardPage').style.display = 'none';
+        }
+
+        function updateUserUI(user) {
+            const name = user.name || 'Sinh viên UTH';
+            const membership = user.membership || 'free';
+
+            document.getElementById('userName').textContent = name;
+            document.getElementById('userAvatar').src =
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0a7e8c&color=fff&size=40`;
+            document.getElementById('profileName').textContent = name;
+            document.getElementById('profileAvatar').src =
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0a7e8c&color=fff&size=150`;
+            document.querySelector('.user-greeting').textContent = `Chào mừng ${name}!`;
+
+            if (user.email) document.getElementById('profileEmail').textContent = user.email;
+            if (user.major) document.getElementById('profileMajor').textContent = `Sinh viên - ${user.major}`;
+
+            const badge = document.getElementById('membershipBadge');
+            const profileBadge = document.getElementById('profileMembershipBadge');
+
+            const membershipMap = {
+                free: { label: 'Miễn phí', class: 'free' },
+                basic: { label: 'Cơ bản', class: 'basic' },
+                premium: { label: 'Cao cấp', class: 'premium' }
+            };
+
+            const info = membershipMap[membership] || membershipMap.free;
+            badge.textContent = info.label;
+            badge.className = `membership-badge ${info.class}`;
+            profileBadge.textContent = info.label;
+            profileBadge.className = `membership-badge ${info.class}`;
+        }
+
+        // ============================================
+        // NAVIGATE
+        // ============================================
+        function navigateTo(page) {
+            const link = document.querySelector(`.sidebar-nav a[data-page="${page}"]`);
+            if (link) link.click();
+        }
+
+        // ============================================
+        // UPGRADE PLAN
+        // ============================================
+        function upgradePlan(plan) {
+            const planNames = {
+                basic: 'Cơ bản (30,000đ/tháng)',
+                premium: 'Cao cấp (60,000đ/tháng)'
+            };
+
+            if (confirm(`Bạn có chắc chắn muốn nâng cấp lên gói ${planNames[plan]}?`)) {
+                const loading = document.getElementById('loadingOverlay');
+                loading.classList.add('active');
+
+                setTimeout(() => {
+                    loading.classList.remove('active');
+
+                    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+                    if (currentUser) {
+                        currentUser.membership = plan;
+                        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+                        const users = JSON.parse(localStorage.getItem('users') || '[]');
+                        const user = users.find(u => u.studentId === currentUser.id);
+                        if (user) {
+                            user.membership = plan;
+                            localStorage.setItem('users', JSON.stringify(users));
+                        }
+
+                        updateUserUI(currentUser);
+
+                        document.querySelectorAll('.membership-card').forEach(c => c.classList.remove('active'));
+                        document.getElementById(`plan-${plan}`).classList.add('active');
+
+                        showNotification(`🎉 Nâng cấp lên gói ${planNames[plan]} thành công!`, 'gold');
+                    }
+                }, 2000);
+            }
+        }
+
+        // ============================================
+        // INIT DASHBOARD DATA
+        // ============================================
+        function initDashboardData() {
+            // Documents
+            const grid = document.getElementById('documentsGrid');
+            if (grid.children.length === 0) {
+                const docs = [
+                    { title: 'Giáo trình Toán cao cấp', course: 'Toán - Kỹ thuật', author: 'Nguyễn Văn A',
+                        type: 'free', condition: 'good', location: 'Thư viện trường - Tầng 1',
+                        img: 'https://via.placeholder.com/400x200/0a7e8c/fff?text=Toan' },
+                    { title: 'Vật lý đại cương', course: 'Vật lý - Kỹ thuật', author: 'Trần Thị B', type: 'free',
+                        condition: 'new', location: 'Sảnh chính A',
+                        img: 'https://via.placeholder.com/400x200/00b894/fff?text=Vat+Ly' },
+                    { title: 'Kỹ thuật lập trình C', course: 'Công nghệ thông tin', author: 'Lê Văn C',
+                        type: 'exchanged', condition: 'fair', location: 'Thư viện trường - Tầng 2',
+                        img: 'https://via.placeholder.com/400x200/f5a623/fff?text=C' },
+                    { title: 'Ngân hàng đề thi VIP', course: 'Công nghệ thông tin', author: 'Admin', type: 'premium',
+                        condition: 'new', location: 'Quán cà phê sinh viên',
+                        img: 'https://via.placeholder.com/400x200/f39c12/fff?text=VIP' },
+                    { title: 'Hướng dẫn giải chi tiết', course: 'Toán - Kỹ thuật', author: 'Trần Thị B',
+                        type: 'premium', condition: 'good', location: 'Khu vực tự học',
+                        img: 'https://via.placeholder.com/400x200/8e44ad/fff?text=GEM' }
+                ];
+
+                const conditionMap = {
+                    new: { label: 'Mới', class: 'new' },
+                    good: { label: 'Tốt', class: 'good' },
+                    fair: { label: 'Khá', class: 'fair' },
+                    poor: { label: 'Cũ', class: 'poor' }
+                };
+
+                docs.forEach(doc => {
+                    const card = document.createElement('div');
+                    card.className = 'doc-card';
+                    const isPremium = doc.type === 'premium';
+                    const isExchanged = doc.type === 'exchanged';
+                    const status = isExchanged ? 'exchanged' : isPremium ? 'premium' : 'available';
+                    const statusLabel = isExchanged ? 'Đã trao đổi' : isPremium ? 'Cao cấp' : 'Còn';
+                    const cond = conditionMap[doc.condition] || conditionMap.good;
+
+                    card.innerHTML = `
+                                <div class="doc-img-wrapper">
+                                    <img src="${doc.img}" alt="${doc.title}">
+                                    <span class="doc-badge ${isPremium ? 'premium' : isExchanged ? 'exchanged' : 'free'}">${statusLabel}</span>
+                                </div>
+                                <div class="doc-body">
+                                    <h4>${doc.title}</h4>
+                                    <p class="course">${doc.course}</p>
+                                    <div class="meta">
+                                        <span><i class="fas fa-user"></i> ${doc.author}</span>
+                                        <span><i class="fas fa-calendar"></i> ${new Date().toLocaleDateString('vi-VN')}</span>
+                                    </div>
+                                    <div class="condition">
+                                        <i class="fas fa-info-circle"></i>
+                                        Tình trạng: <span class="condition-badge ${cond.class}">${cond.label}</span>
+                                    </div>
+                                    <div class="location-info">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        Địa điểm: ${doc.location}
+                                    </div>
+                                    <div class="doc-footer">
+                                        <span class="doc-status ${status}">${statusLabel}</span>
+                                        <button class="btn-small ${isPremium ? 'gold' : ''}" ${isExchanged ? 'disabled' : ''}>
+                                            ${isPremium ? '💰 Mua' : 'Trao đổi'}
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                    grid.appendChild(card);
+                });
+            }
+
+            // Requests
+            const requestsList = document.getElementById('requestsList');
+            if (requestsList.children.length === 0) {
+                const requests = [
+                    { title: 'Giáo trình HTML/CSS', user: 'Nguyễn Thị M', time: '10 phút trước' },
+                    { title: 'Sách Cơ học kỹ thuật', user: 'Trần Văn N', time: '30 phút trước' },
+                    { title: 'Tài liệu Mạng máy tính', user: 'Lê Thị P', time: '1 giờ trước' },
+                    { title: 'Giáo trình Tiếng Anh', user: 'Phạm Văn Q', time: '2 giờ trước' }
+                ];
+
+                requests.forEach(req => {
+                    const div = document.createElement('div');
+                    div.className = 'request-card';
+                    div.innerHTML = `
+                                <div class="info">
+                                    <h4>${req.title}</h4>
+                                    <p><i class="fas fa-user"></i> ${req.user} • <i class="fas fa-clock"></i> ${req.time}</p>
+                                </div>
+                                <div class="request-actions">
+                                    <button class="btn-approve">Duyệt</button>
+                                    <button class="btn-reject">Từ chối</button>
+                                </div>
+                            `;
+                    requestsList.appendChild(div);
+                });
+            }
+
+            // Messages
+            const messagesList = document.getElementById('messagesList');
+            if (messagesList.children.length === 0) {
+                const msgs = [
+                    { name: 'Trần Thị B', msg: 'Chào bạn, tôi muốn hỏi về tài liệu Toán cao cấp...',
+                        time: '10 phút trước', unread: 3 },
+                    { name: 'Lê Văn C', msg: 'Bạn có thể cho tôi mượn sách Vật lý được không?', time: '1 giờ trước',
+                        unread: 0 },
+                    { name: 'Mai Văn D', msg: 'Cảm ơn bạn đã trao đổi tài liệu với mình!', time: '3 giờ trước',
+                        unread: 1 }
+                ];
+
+                msgs.forEach(msg => {
+                    const div = document.createElement('div');
+                    div.className = 'message-card';
+                    div.innerHTML = `
+                                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(msg.name)}&background=0a7e8c&color=fff&size=50" alt="${msg.name}">
+                                <div class="content">
+                                    <h4>${msg.name}</h4>
+                                    <p>${msg.msg}</p>
+                                    <span class="time">${msg.time}</span>
+                                </div>
+                                ${msg.unread > 0 ? `<span class="unread">${msg.unread}</span>` : ''}
+                            `;
+                    messagesList.appendChild(div);
+                });
+            }
+
+            // History
+            const historyContainer = document.getElementById('historyList');
+            if (historyContainer.children.length === 0) {
+                const historyItems = JSON.parse(localStorage.getItem('historyItems') || '[]');
+                if (historyItems.length === 0) {
+                    const sampleHistory = [
+                        { id: 'h1', title: 'Giáo trình Toán cao cấp', partner: 'Trần Văn X',
+                            date: '15/06/2026', status: 'completed', location: 'Thư viện trường - Tầng 1',
+                            rated: true, rating: 5 },
+                        { id: 'h2', title: 'Vật lý đại cương', partner: 'Lê Thị Y',
+                            date: '14/06/2026', status: 'completed', location: 'Sảnh chính A',
+                            rated: false, rating: 0 },
+                        { id: 'h3', title: 'Kỹ thuật lập trình C', partner: 'Phạm Văn Z',
+                            date: '13/06/2026', status: 'pending', location: 'Thư viện trường - Tầng 2',
+                            rated: false, rating: 0 },
+                        { id: 'h4', title: 'Cơ sở dữ liệu', partner: 'Nguyễn Thị M',
+                            date: '12/06/2026', status: 'completed', location: 'Quán cà phê sinh viên',
+                            rated: true, rating: 4 }
+                    ];
+                    localStorage.setItem('historyItems', JSON.stringify(sampleHistory));
+                }
+            }
+        }
+
+        // ============================================
+        // SIDEBAR
+        // ============================================
+        function initSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const menuToggle = document.getElementById('menuToggle');
+            const sidebarClose = document.getElementById('sidebarClose');
+
+            function openSidebar() {
+                sidebar.classList.add('open');
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeSidebar() {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            function toggleSidebar() {
+                if (sidebar.classList.contains('open')) {
+                    closeSidebar();
+                } else {
+                    openSidebar();
+                }
+            }
+
+            if (menuToggle) menuToggle.addEventListener('click', toggleSidebar);
+            if (sidebarClose) sidebarClose.addEventListener('click', closeSidebar);
+            if (overlay) overlay.addEventListener('click', closeSidebar);
+
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768 && sidebar.classList.contains('open')) {
+                    closeSidebar();
+                }
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && sidebar.classList.contains('open')) {
+                    closeSidebar();
+                }
+            });
+
+            return { openSidebar, closeSidebar, toggleSidebar };
+        }
+
+        // ============================================
+        // DASHBOARD INIT
+        // ============================================
+        function initDashboard() {
+            const sidebarManager = initSidebar();
+
+            // Navigation
+            const navLinks = document.querySelectorAll('.sidebar-nav a[data-page]');
+            const pages = document.querySelectorAll('.page');
+            const pageTitle = document.getElementById('pageTitle');
+            const pageSubtitle = document.getElementById('pageSubtitle');
+
+            const pageNames = {
+                'dashboard': ['Tổng quan', 'Chào mừng bạn đến với E-Logistics'],
+                'documents': ['Tài liệu', 'Quản lý tài liệu học tập của bạn'],
+                'exchange': ['Trao đổi', 'Trao đổi tài liệu với sinh viên khác'],
+                'requests': ['Yêu cầu', 'Quản lý các yêu cầu trao đổi'],
+                'messages': ['Tin nhắn', 'Kết nối với bạn bè và đồng nghiệp'],
+                'history': ['Lịch sử trao đổi', 'Xem lại các giao dịch đã thực hiện'],
+                'profile': ['Hồ sơ', 'Thông tin cá nhân của bạn'],
+                'membership': ['Nâng cấp thành viên', 'Chọn gói phù hợp với bạn']
+            };
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+
+                    pages.forEach(p => p.classList.remove('active'));
+
+                    const pageId = this.dataset.page;
+                    const target = document.getElementById(`page-${pageId}`);
+                    if (target) target.classList.add('active');
+
+                    const [title, subtitle] = pageNames[pageId] || ['Trang', ''];
+                    if (pageTitle) pageTitle.textContent = title;
+                    if (pageSubtitle) pageSubtitle.textContent = subtitle;
+
+                    if (window.innerWidth <= 768) {
+                        sidebarManager.closeSidebar();
+                    }
+                });
+            });
+
+            // Logout
+            document.getElementById('logoutBtn')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                    localStorage.removeItem('currentUser');
+                    sessionStorage.clear();
+                    showNotification('Đã đăng xuất thành công', 'info');
+                    setTimeout(() => showLogin(), 500);
+                }
+            });
+
+            // Modals
+            const modal = document.getElementById('addDocModal');
+            const premiumModal = document.getElementById('addPremiumDocModal');
+            const addBtn = document.getElementById('addDocBtn');
+            const addPremiumBtn = document.getElementById('addPremiumDocBtn');
+            const closeBtn = document.getElementById('closeModal');
+            const closePremiumBtn = document.getElementById('closePremiumModal');
+
+            function openModal(m) {
+                if (m) { m.classList.add('active');
+                    document.body.style.overflow = 'hidden'; }
+            }
+
+            function closeModal(m) {
+                if (m) { m.classList.remove('active');
+                    document.body.style.overflow = ''; }
+            }
+
+            if (addBtn) addBtn.addEventListener('click', () => openModal(modal));
+            if (addPremiumBtn) addPremiumBtn.addEventListener('click', () => openModal(premiumModal));
+            if (closeBtn) closeBtn.addEventListener('click', () => closeModal(modal));
+            if (closePremiumBtn) closePremiumBtn.addEventListener('click', () => closeModal(premiumModal));
+
+            [modal, premiumModal].forEach(m => {
+                if (m) {
+                    m.addEventListener('click', function(e) {
+                        if (e.target === this) closeModal(this);
+                    });
+                }
+            });
+
+            // Add document form
+            document.getElementById('addDocForm')?.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const title = document.getElementById('docTitle').value;
+                const course = document.getElementById('docCourse').value;
+                const author = document.getElementById('docAuthor').value;
+                const condition = document.getElementById('docCondition').value;
+                const location = document.getElementById('docLocation').value;
+                const type = document.getElementById('docType').value;
+                const price = document.getElementById('docPrice').value;
+                const description = document.getElementById('docDescription').value;
+
+                if (title && course && author) {
+                    const grid = document.getElementById('documentsGrid');
+                    const isPremium = type === 'premium';
+                    const gradient = isPremium ?
+                        'linear-gradient(145deg,#f39c12,#d68910)' :
+                        'linear-gradient(145deg,#0a7e8c,#065a66)';
+
+                    const conditionMap = {
+                        new: { label: 'Mới', class: 'new' },
+                        good: { label: 'Tốt', class: 'good' },
+                        fair: { label: 'Khá', class: 'fair' },
+                        poor: { label: 'Cũ', class: 'poor' }
+                    };
+                    const cond = conditionMap[condition] || conditionMap.good;
+
+                    const imageFile = document.getElementById('docImage').files[0];
+                    const imgSrc = imageFile ? URL.createObjectURL(imageFile) :
+                        `https://via.placeholder.com/400x200/0a7e8c/fff?text=${encodeURIComponent(title)}`;
+
+                    const card = document.createElement('div');
+                    card.className = 'doc-card';
+                    card.style.animation = 'fadeIn 0.4s ease';
+                    card.innerHTML = `
+                                <div class="doc-img-wrapper">
+                                    <img src="${imgSrc}" alt="${title}">
+                                    <span class="doc-badge ${isPremium ? 'premium' : 'free'}">${isPremium ? 'Cao cấp' : 'Miễn phí'}</span>
+                                </div>
+                                <div class="doc-body">
+                                    <h4>${title}</h4>
+                                    <p class="course">${course}</p>
+                                    <div class="meta">
+                                        <span><i class="fas fa-user"></i> ${author}</span>
+                                        <span><i class="fas fa-calendar"></i> Hôm nay</span>
+                                    </div>
+                                    <div class="condition">
+                                        <i class="fas fa-info-circle"></i>
+                                        Tình trạng: <span class="condition-badge ${cond.class}">${cond.label}</span>
+                                    </div>
+                                    <div class="location-info">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        Địa điểm: ${location}
+                                    </div>
+                                    <div class="doc-footer">
+                                        <span class="doc-status ${isPremium ? 'premium' : 'available'}">${isPremium ? 'Cao cấp' : 'Còn'}</span>
+                                        <button class="btn-small ${isPremium ? 'gold' : ''}">${isPremium ? '💰 ' + Number(price).toLocaleString() + 'đ' : 'Trao đổi'}</button>
+                                    </div>
+                                </div>
+                            `;
+                    grid.prepend(card);
+
+                    if (isPremium) {
+                        showNotification(`💰 Tài liệu cao cấp "${title}" đã được đăng!`, 'gold');
+                    } else {
+                        showNotification(`Tài liệu "${title}" đã được thêm thành công!`, 'success');
+                    }
+
+                    this.reset();
+                    document.getElementById('imagePreview').style.display = 'none';
+                    closeModal(modal);
+                    document.body.style.overflow = '';
+                }
+            });
+
+            // Add premium document form
+            document.getElementById('addPremiumDocForm')?.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const title = document.getElementById('premiumTitle').value;
+                const course = document.getElementById('premiumCourse').value;
+                const author = document.getElementById('premiumAuthor').value;
+                const condition = document.getElementById('premiumCondition').value;
+                const location = document.getElementById('premiumLocation').value;
+                const price = document.getElementById('premiumPrice').value;
+                const description = document.getElementById('premiumDescription').value;
+
+                if (title && course && author && price) {
+                    const grid = document.getElementById('documentsGrid');
+
+                    const conditionMap = {
+                        new: { label: 'Mới', class: 'new' },
+                        good: { label: 'Tốt', class: 'good' },
+                        fair: { label: 'Khá', class: 'fair' },
+                        poor: { label: 'Cũ', class: 'poor' }
+                    };
+                    const cond = conditionMap[condition] || conditionMap.good;
+
+                    const imageFile = document.getElementById('premiumImage').files[0];
+                    const imgSrc = imageFile ? URL.createObjectURL(imageFile) :
+                        `https://via.placeholder.com/400x200/f39c12/fff?text=${encodeURIComponent(title)}`;
+
+                    const card = document.createElement('div');
+                    card.className = 'doc-card';
+                    card.style.animation = 'fadeIn 0.4s ease';
+                    card.innerHTML = `
+                                <div class="doc-img-wrapper">
+                                    <img src="${imgSrc}" alt="${title}">
+                                    <span class="doc-badge premium">Cao cấp</span>
+                                </div>
+                                <div class="doc-body">
+                                    <h4>${title} <span style="font-size:0.7rem;color:#f39c12;">★VIP</span></h4>
+                                    <p class="course">${course}</p>
+                                    <div class="meta">
+                                        <span><i class="fas fa-user"></i> ${author}</span>
+                                        <span><i class="fas fa-calendar"></i> Hôm nay</span>
+                                    </div>
+                                    <div class="condition">
+                                        <i class="fas fa-info-circle"></i>
+                                        Tình trạng: <span class="condition-badge ${cond.class}">${cond.label}</span>
+                                    </div>
+                                    <div class="location-info">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        Địa điểm: ${location}
+                                    </div>
+                                    <div class="doc-footer">
+                                        <span class="doc-status premium">Cao cấp</span>
+                                        <button class="btn-small gold">💰 ${Number(price).toLocaleString()}đ</button>
+                                    </div>
+                                </div>
+                            `;
+                    grid.prepend(card);
+
+                    showNotification(`💰 Tài liệu cao cấp "${title}" đã được đăng!`, 'gold');
+
+                    this.reset();
+                    document.getElementById('premiumImagePreview').style.display = 'none';
+                    closeModal(premiumModal);
+                    document.body.style.overflow = '';
+                }
+            });
+
+            // Notification dropdown
+            const notifBtn = document.getElementById('notifBtn');
+            const notifDropdown = document.getElementById('notifDropdown');
+
+            if (notifBtn && notifDropdown) {
+                notifBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    notifDropdown.classList.toggle('active');
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!notifBtn.contains(e.target) && !notifDropdown.contains(e.target)) {
+                        notifDropdown.classList.remove('active');
+                    }
+                });
+            }
+
+            document.querySelector('.mark-read')?.addEventListener('click', function() {
+                document.querySelectorAll('.notif-dropdown .item.unread').forEach(item => {
+                    item.classList.remove('unread');
+                });
+                document.querySelector('.notif-btn .dot').style.display = 'none';
+                showNotification('Đã đánh dấu tất cả thông báo là đã đọc', 'success');
+            });
+
+            // Search
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const term = this.value.toLowerCase();
+                    document.querySelectorAll('.doc-item, .doc-card').forEach(item => {
+                        const text = item.textContent.toLowerCase();
+                        item.style.display = text.includes(term) ? '' : 'none';
+                    });
+                });
+            }
+
+            // Exchange buttons
+            document.addEventListener('click', function(e) {
+                const btn = e.target.closest('.btn-small');
+                if (btn && !btn.disabled) {
+                    const card = btn.closest('.doc-card') || btn.closest('.exchange-item');
+                    const title = card?.querySelector('h4')?.textContent || 'tài liệu';
+
+                    if (btn.textContent.includes('💰')) {
+                        const price = btn.textContent.replace(/[^0-9]/g, '');
+                        if (confirm(`Bạn có muốn mua tài liệu "${title}" với giá ${Number(price).toLocaleString()}đ?`)) {
+                            showNotification(`✅ Đã mua thành công "${title}"!`, 'gold');
+                            btn.textContent = 'Đã mua';
+                            btn.disabled = true;
+                            btn.style.opacity = '0.6';
+                        }
+                    } else if (btn.textContent.trim() === 'Trao đổi') {
+                        if (confirm(`Bạn có muốn yêu cầu trao đổi tài liệu "${title}"?`)) {
+                            showNotification(`Đã gửi yêu cầu trao đổi "${title}"`, 'success');
+                            btn.textContent = 'Đã gửi';
+                            btn.disabled = true;
+                            btn.style.opacity = '0.6';
+                        }
+                    }
+                }
+            });
+
+            // Filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+
+                    const filter = this.dataset.filter;
+                    document.querySelectorAll('.exchange-card').forEach(item => {
+                        if (filter === 'all') {
+                            item.style.display = '';
+                        } else {
+                            item.style.display = item.dataset.status === filter ? '' : 'none';
+                        }
+                    });
+                });
+            });
+
+            document.getElementById('markAllRead')?.addEventListener('click', function() {
+                document.querySelectorAll('.request-card').forEach(req => {
+                    req.style.borderLeftColor = '#d4edda';
+                    req.style.opacity = '0.7';
+                });
+                showNotification('Đã đánh dấu tất cả yêu cầu là đã đọc', 'success');
+            });
+
+            document.getElementById('newMsgBtn')?.addEventListener('click', function() {
+                const name = prompt('Nhập tên người nhận:');
+                if (name) {
+                    const container = document.getElementById('messagesList');
+                    const msg = document.createElement('div');
+                    msg.className = 'message-card';
+                    msg.style.animation = 'fadeIn 0.4s ease';
+                    msg.innerHTML = `
+                                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0a7e8c&color=fff&size=50" alt="${name}">
+                                <div class="content">
+                                    <h4>${name}</h4>
+                                    <p>Chào bạn, tôi muốn trao đổi tài liệu...</p>
+                                    <span class="time">Vừa xong</span>
+                                </div>
+                                <span class="unread">1</span>
+                            `;
+                    container.prepend(msg);
+                    showNotification(`Đã gửi tin nhắn đến ${name}`, 'success');
+                }
+            });
+
+            document.getElementById('editProfileBtn')?.addEventListener('click', function() {
+                const newName = prompt('Nhập tên mới:', document.getElementById('profileName').textContent);
+                if (newName) {
+                    document.getElementById('profileName').textContent = newName;
+                    document.getElementById('userName').textContent = newName;
+                    document.getElementById('userAvatar').src =
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(newName)}&background=0a7e8c&color=fff&size=40`;
+                    document.getElementById('profileAvatar').src =
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(newName)}&background=0a7e8c&color=fff&size=150`;
+                    document.querySelector('.user-greeting').textContent = `Chào mừng ${newName}!`;
+                    showNotification('Đã cập nhật hồ sơ thành công!', 'success');
+                }
+            });
+
+            document.querySelector('.change-btn')?.addEventListener('click', function() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.onchange = function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(ev) {
+                            document.getElementById('profileAvatar').src = ev.target.result;
+                            document.getElementById('userAvatar').src = ev.target.result;
+                            showNotification('Đã cập nhật ảnh đại diện!', 'success');
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                };
+                input.click();
+            });
+
+            document.addEventListener('click', function(e) {
+                const btn = e.target.closest('.btn-approve, .btn-reject');
+                if (btn) {
+                    const card = btn.closest('.request-card');
+                    const title = card?.querySelector('h4')?.textContent || 'tài liệu';
+                    const action = btn.classList.contains('btn-approve') ? 'duyệt' : 'từ chối';
+
+                    if (confirm(`Bạn có chắc chắn muốn ${action} yêu cầu "${title}" không?`)) {
+                        card.style.opacity = '0.5';
+                        card.style.pointerEvents = 'none';
+                        showNotification(`Đã ${action} yêu cầu "${title}"`, 'success');
+                        setTimeout(() => {
+                            card.style.transition = 'all 0.5s ease';
+                            card.style.transform = 'translateX(100px)';
+                            card.style.opacity = '0';
+                            setTimeout(() => card.remove(), 500);
+                        }, 1000);
+                    }
+                }
+            });
+
+            document.querySelectorAll('.view-all').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const card = this.closest('.card');
+                    const isDocs = card?.querySelector('.doc-item');
+                    const isExchange = card?.querySelector('.exchange-item');
+
+                    if (isDocs) {
+                        document.querySelector('[data-page="documents"]')?.click();
+                    } else if (isExchange) {
+                        document.querySelector('[data-page="exchange"]')?.click();
+                    }
+                });
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'k') {
+                    e.preventDefault();
+                    document.getElementById('searchInput')?.focus();
+                }
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.modal.active').forEach(m => {
+                        m.classList.remove('active');
+                        document.body.style.overflow = '';
+                    });
+                    document.getElementById('notifDropdown')?.classList.remove('active');
+                    if (window.innerWidth <= 768) {
+                        document.getElementById('sidebar')?.classList.remove('open');
+                        document.getElementById('sidebarOverlay')?.classList.remove('active');
+                    }
+                }
+            });
+
+            console.log('🚀 E-Logistics Dashboard v2.0');
+            console.log('📚 Nền tảng trao đổi tài liệu học tập cộng đồng');
+            console.log('📍 Chọn địa điểm trao đổi trên thanh công cụ');
+            console.log('⭐ Đánh giá tài liệu sau khi trao đổi');
+            console.log('📷 Hỗ trợ đăng ảnh sách/tài liệu');
+        }
+
+        // ============================================
+        // CHECK LOGIN STATUS
+        // ============================================
+        (function() {
+            const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+            if (currentUser) {
+                showDashboard();
+            } else {
+                showLogin();
+            }
+
+            console.log('🚀 E-Logistics v2.0 - Community Edition');
+            console.log('📚 Nền tảng trao đổi tài liệu học tập miễn phí');
+            console.log('📍 Chọn địa điểm trao đổi trên thanh công cụ');
+            console.log('⭐ Đánh giá tài liệu sau khi trao đổi');
+            console.log('📷 Đăng ảnh sách để dễ dàng trao đổi');
+            console.log('🔗 ' + window.location.href);
+        })();
+    </script>
+
+</body>
+</html>
